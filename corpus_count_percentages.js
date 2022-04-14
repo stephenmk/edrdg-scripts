@@ -29,7 +29,7 @@ function main() {
 	document.querySelectorAll("tr").forEach(row => {
 		const cellCount = parseInt(row.cells[1].innerText);
 		const percText = !Number.isNaN(cellCount) ?
-			parseFloat(cellCount * 100.0 / totalCount).toFixed(2) + "%" :
+			parseFloat(cellCount * 100.0 / totalCount).toFixed(1) + "%" :
 			"-  ";
 		// Pad with spaces so this info will look nicer when copied & pasted elsewhere.
 		const percTextNode = document.createTextNode(percText.padStart(6));
