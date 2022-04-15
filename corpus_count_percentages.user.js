@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        edrdg N-gram Corpus Count Percentages
 // @namespace   edrdg-scripts
-// @version     1.0
+// @version     1.1
 // @author      Stephen Kraus
 // @match       *://*.edrdg.org/~jwb/cgi-bin/ngramlookup*
 // @icon        https://www.edrdg.org/favicon.ico
@@ -13,41 +13,41 @@
 
 function main() {
 	// Calculate the total number of counts (for calculating percentages later).
-	// Determine the maximum text length (for padding and formatting later).
+	// Prepend formatted count text values to the beginning of the rows and
+	// determine the maximum text length (for padding later).
 	let totalCount = 0;
 	let maxCountCellLength = 0;
-	document.querySelectorAll("tr td:nth-child(2)").forEach(cell => {
-		const cellCount = parseInt(cell.innerText);
+	document.querySelectorAll("tr").forEach(row => {
+		const cellCount = parseInt(row.cells[1].innerText);
+		const displayCell = row.insertCell(0);
 		if (!Number.isNaN(cellCount)) {
 			totalCount += cellCount;
-			cell.innerText = Number(cellCount).toLocaleString();
+			displayCell.innerText = Number(cellCount).toLocaleString();
 		} else {
-			cell.innerText = "None";
+			displayCell.innerText = "None";
 		}
-		if (maxCountCellLength < cell.innerText.length) {
-			maxCountCellLength = cell.innerText.length;
+		if (maxCountCellLength < displayCell.innerText.length) {
+			maxCountCellLength = displayCell.innerText.length;
 		}
 	})
 
 
 	// Prepend new cells to the table with percentage information.
+	// Format the new count cells and delete the original cells.
 	document.querySelectorAll("tr").forEach(row => {
-		const cellCount = parseInt(row.cells[1].innerText);
+		const cellCount = parseInt(row.cells[2].innerText);
 		const percText = !Number.isNaN(cellCount) ?
 			parseFloat(cellCount * 100.0 / totalCount).toFixed(1) + "%" :
 			"-  ";
-		// Pad with spaces so this info will look nicer when copied & pasted elsewhere.
+		// Pad percentages with spaces so they'll look nicer when copied & pasted elsewhere.
 		const percTextNode = document.createTextNode(percText.padStart(6));
-		const percCell = row.insertCell(0);
+		const percCell = row.insertCell(1);
 		percCell.appendChild(percTextNode);
-	})
 
+		// Pad formatted counts with spaces.
+		row.cells[0].innerText = row.cells[0].innerText.padStart(maxCountCellLength);
 
-	// Move the count cells to the beginning of the rows.
-	document.querySelectorAll("tr").forEach(row => {
-		const countNodeCopy = document.createTextNode(row.cells[2].innerText.padStart(maxCountCellLength));
-		const newCountCell = row.insertCell(0);
-		newCountCell.appendChild(countNodeCopy);
+		// Delete the original count cells.
 		row.deleteCell(3);
 	})
 
