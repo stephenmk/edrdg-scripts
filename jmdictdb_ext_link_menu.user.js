@@ -119,9 +119,9 @@ function makeLinkMenus() {
 		item.querySelectorAll(".rdng").forEach(reading => {
 			readingList.push(reading.innerText)
 		})
+		if (readingList.length == 0) return;
 
 		const allExpressions = kanjiList.concat(readingList);
-		if (allExpressions.length == 0) return;
 
 		// Display links for all kanji expressions and the first reading.
 		// If there are no kanji expressions, use all the readings.
