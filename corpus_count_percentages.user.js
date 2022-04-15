@@ -20,29 +20,31 @@ function main() {
 	document.querySelectorAll("tr").forEach(row => {
 		const cellCount = parseInt(row.cells[1].innerText);
 		const displayCell = row.insertCell(0);
+
 		if (!Number.isNaN(cellCount)) {
 			totalCount += cellCount;
 			displayCell.innerText = Number(cellCount).toLocaleString();
 		} else {
 			displayCell.innerText = "None";
 		}
+
 		if (maxCountCellLength < displayCell.innerText.length) {
 			maxCountCellLength = displayCell.innerText.length;
 		}
 	})
 
 
-	// Prepend new cells to the table with percentage information.
+	// Insert new cells into the table with percentage information.
 	// Format the new count cells and delete the original cells.
 	document.querySelectorAll("tr").forEach(row => {
 		const cellCount = parseInt(row.cells[2].innerText);
 		const percText = !Number.isNaN(cellCount) ?
 			parseFloat(cellCount * 100.0 / totalCount).toFixed(1) + "%" :
 			"-  ";
+
 		// Pad percentages with spaces so they'll look nicer when copied & pasted elsewhere.
-		const percTextNode = document.createTextNode(percText.padStart(6));
 		const percCell = row.insertCell(1);
-		percCell.appendChild(percTextNode);
+		percCell.innerText = percText.padStart(6);
 
 		// Pad formatted counts with spaces.
 		row.cells[0].innerText = row.cells[0].innerText.padStart(maxCountCellLength);
