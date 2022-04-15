@@ -18,7 +18,12 @@ function main() {
 	let maxCountCellLength = 0;
 	document.querySelectorAll("tr td:nth-child(2)").forEach(cell => {
 		const cellCount = parseInt(cell.innerText);
-		totalCount += !Number.isNaN(cellCount) ? cellCount : 0;
+		if (!Number.isNaN(cellCount)) {
+			totalCount += cellCount;
+			cell.innerText = Number(cellCount).toLocaleString();
+		} else {
+			cell.innerText = "None";
+		}
 		if (maxCountCellLength < cell.innerText.length) {
 			maxCountCellLength = cell.innerText.length;
 		}
