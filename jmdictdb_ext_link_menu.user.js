@@ -24,7 +24,7 @@ const urls = {
 
 function makeLinkMenuStyleClasses() {
 	const style = document.createElement('style');
-	style.innerHTML = `
+	style.innerText = `
           .linkMenuContainer {
             position: relative;
             display: inline-block;
@@ -48,7 +48,7 @@ function makeLinkMenuStyleClasses() {
             display: block;
             padding: 2px 0px 2px 10px;
           }
-          .showLinkMenuContent {
+          .linkMenuContent.active {
             display: block;
           }`;
 	document.head.appendChild(style);
@@ -57,11 +57,11 @@ function makeLinkMenuStyleClasses() {
 
 // Toggle the display of the link menu on button clicks
 function linkMenuButtonClick(event) {
-	const linkMenuContent = document.getElementById(event.currentTarget.linkMenuContentId);
-	const doShowMenu = !linkMenuContent.classList.contains("showLinkMenuContent");
+	const linkMenuContent = this.nextElementSibling;
+	const doShowMenu = !linkMenuContent.classList.contains("active");
 	hideAllLinkMenus();
 	if (doShowMenu) {
-		linkMenuContent.classList.add("showLinkMenuContent")
+		linkMenuContent.classList.add("active")
 	}
 }
 
@@ -83,8 +83,8 @@ function makeLinkMenuHideListener() {
 
 
 function hideAllLinkMenus() {
-	document.querySelectorAll(".showLinkMenuContent").forEach(element => {
-		element.classList.remove('showLinkMenuContent')
+	document.querySelectorAll(".linkMenuContent.active").forEach(element => {
+		element.classList.remove('active')
 	})
 }
 
@@ -109,7 +109,7 @@ function makeLinkHeading(innerText) {
 
 
 function makeLinkMenus() {
-	document.querySelectorAll(".item").forEach((item, index) => {
+	document.querySelectorAll(".item").forEach(item => {
 		const kanjiList = [];
 		item.querySelectorAll(".kanj").forEach(kanji => {
 			kanjiList.push(kanji.innerText)
@@ -140,9 +140,7 @@ function makeLinkMenus() {
 			menuItems.push(makeLink("Wadoku", urls["wadoku"], [expression]))
 		})
 
-		const linkMenuContentId = "linkMenu" + index
 		const linkMenuContent = document.createElement("div");
-		linkMenuContent.id = linkMenuContentId
 		linkMenuContent.classList.add("linkMenuContent");
 		menuItems.forEach(menuItem => {
 			linkMenuContent.appendChild(menuItem);
@@ -151,7 +149,6 @@ function makeLinkMenus() {
 		const linkMenuButton = document.createElement("button");
 		linkMenuButton.classList.add("linkMenuButton");
 		linkMenuButton.innerText = "External Links"
-		linkMenuButton.linkMenuContentId = linkMenuContentId
 		linkMenuButton.addEventListener("click", linkMenuButtonClick, false)
 
 		const linkMenuContainer = document.createElement("div");
