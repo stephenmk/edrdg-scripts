@@ -46,7 +46,7 @@ function makeLinkMenuStyleClasses() {
           }
           .linkMenuHeading {
             display: block;
-            padding: 2px 0px 2px 10px;
+            padding: 2px 0px 2px 2px;
           }
           .linkMenuContent.active {
             display: block;
@@ -56,7 +56,7 @@ function makeLinkMenuStyleClasses() {
 
 
 // Toggle the display of the link menu on button clicks
-function linkMenuButtonClick(event) {
+function linkMenuButtonClick() {
 	const linkMenuContent = this.nextElementSibling;
 	const doShowMenu = !linkMenuContent.classList.contains("active");
 	hideAllLinkMenus();
@@ -89,20 +89,19 @@ function hideAllLinkMenus() {
 }
 
 
-function makeLink(innerText, url, parameterList) {
-	const textNode = document.createTextNode(innerText);
+function makeLink(text, url, parameterList) {
 	const linkElement = document.createElement("a");
-	linkElement.appendChild(textNode);
+	linkElement.textContent = text
 	linkElement.href = url + parameterList.join('+');
 	linkElement.classList.add("linkMenuItem");
 	return linkElement;
 }
 
 
-function makeLinkHeading(innerText) {
-	const textNode = document.createTextNode("[" + innerText + "]");
+function makeLinkHeading(text) {
 	const spanNode = document.createElement("span");
-	spanNode.appendChild(textNode)
+	spanNode.textContent = "【" + text + "】";
+	spanNode.lang="ja";
 	spanNode.classList.add("linkMenuHeading");
 	return spanNode;
 }
