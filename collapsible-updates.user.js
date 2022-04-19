@@ -170,6 +170,9 @@ function makeStyleClasses() {
              margin: 0px !important;
              border-top-width: 0px !important;
            }
+           .jmd-footer {
+             height: 90vh; /* prevent the scroll from jumping around when collapsing content near the bottom of the page */
+           }
            .collapse-button {
              cursor: pointer;
              padding: 5px 0px 5px 50px;
@@ -178,16 +181,25 @@ function makeStyleClasses() {
              text-align: left;
              border: solid thin black;
              font-size: 1em;
+             scroll-margin-top: 50px;
            }
            .active, .collapse-button:hover {
            }
            .collapse-content {
-             display: none;
+             display: block;
              overflow: hidden;
            }
-           .collapse-content.active {
+           .collapse-content-hidden {
+             display: none;
+             max-height: 0;
+           }
+           .collapse-content-transition.collapse-content-hidden {
              display: block;
-           }`;
+           }
+           .collapse-content-transition {
+             transition: max-height 0.5s ease;
+           }
+           `;
 	document.head.appendChild(style);
 }
 
@@ -226,12 +238,11 @@ function sortEntries() {
 
 	const seqToGroups = entries.reduce((seqToGroups, entry) => {
 		const sequence = entry.sequence;
-
-		if (!seqToGroups[sequence])
+		if (!seqToGroups[sequence]) {
 			seqToGroups[sequence] = new EntryGroup(entry);
-		else
+		} else {
 			seqToGroups[sequence].push(entry)
-
+		}
 		return seqToGroups;
 	}, {});
 
@@ -250,9 +261,26 @@ function sortEntries() {
 
 
 function addCollapseButtons() {
-	const clickListener = function() {
+	const buttonClickListener = function() {
 		this.classList.toggle("active");
-		this.nextElementSibling.classList.toggle("active");
+		content = this.nextElementSibling;
+		if (content.classList.contains("collapse-content-hidden")) {
+			content.classList.add("collapse-content-transition");
+			content.style.maxHeight = content.scrollHeight + "px";
+			content.classList.remove("collapse-content-hidden");
+		} else {
+			content.classList.add("collapse-content-transition");
+			content.style.maxHeight = 0;
+			content.classList.add("collapse-content-hidden");
+		}
+	}
+
+	const contentTransitionEndListener = function() {
+		this.classList.remove('collapse-content-transition');
+		const button = this.previousElementSibling;
+		if (!this.classList.contains("collapse-content-hidden")) {
+			button.scrollIntoView({ behavior: "smooth" });
+		}
 	}
 
 	const createJapaneseTextNode = function(text) {
@@ -267,6 +295,7 @@ function addCollapseButtons() {
 		const collapseButton = document.createElement("button");
 
 		item.classList.add("collapse-content");
+		item.classList.add("collapse-content-hidden")
 		collapseButton.classList.add("collapse-button");
 
 		const childNodes = [
@@ -287,7 +316,8 @@ function addCollapseButtons() {
 			collapseButton.appendChild(node);
 		});
 
-		collapseButton.addEventListener("click", clickListener, false);
+		collapseButton.addEventListener("click", buttonClickListener, false);
+		item.addEventListener("transitionend", contentTransitionEndListener, false);
 		item.before(collapseButton);
 	});
 }
