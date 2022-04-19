@@ -22,16 +22,32 @@ const localeOptions = {
 
 const timestampRegex = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/;
 
+
+class EntryGroup {
+	constructor(entry) {
+		this.entries = [entry];
+		this.maxDate = entry.date;
+	}
+	push(entry) {
+		this.entries.push(entry);
+		if (this.maxDate < entry.date) {
+			this.maxDate = entry.date;
+		}
+	}
+	sort() {
+		this.entries.sort((a, b) => b.date - a.date);
+	}
+}
+
+
 class Entry {
 	constructor(item) {
 		this.item = item;
 	}
-
 	get mostRecentHistoryHeader() {
 		const hhdr = this.item.querySelector(".hhdr");
 		return new HistoryHeader(hhdr);
 	}
-
 	get historyHeaders() {
 		const historyHeaders = [];
 		this.item.querySelectorAll(".hhdr").forEach(hhdr => {
@@ -39,7 +55,6 @@ class Entry {
 		});
 		return historyHeaders;
 	}
-
 	get sequence() {
 		if ("sequence" in this.item.dataset) {
 			return this.item.dataset.sequence;
@@ -48,7 +63,6 @@ class Entry {
 		this.item.dataset.sequence = sequence;
 		return sequence;
 	}
-
 	get corpus() {
 		if ("corpus" in this.item.dataset) {
 			return this.item.dataset.corpus;
@@ -57,7 +71,6 @@ class Entry {
 		this.item.dataset.corpus = corpus;
 		return corpus;
 	}
-
 	get status() {
 		if ("status" in this.item.dataset) {
 			return this.item.dataset.status;
@@ -66,7 +79,6 @@ class Entry {
 		this.item.dataset.status = status;
 		return status;
 	}
-
 	get expression() {
 		if ("expression" in this.item.dataset) {
 			return this.item.dataset.expression;
@@ -77,7 +89,6 @@ class Entry {
 		this.item.dataset.expression = expression;
 		return expression;
 	}
-
 	get date() {
 		if ("date" in this.item.dataset) {
 			return new Date(this.item.dataset.date);
@@ -86,7 +97,6 @@ class Entry {
 		this.item.dataset.date = date.toJSON();
 		return date;
 	}
-
 	get recentSubmitters() {
 		if ("recentSubmitters" in this.item.dataset) {
 			return JSON.parse(this.item.dataset.recentSubmitters);
@@ -109,7 +119,6 @@ class Entry {
 		this.item.dataset.recentSubmitters = JSON.stringify(uniqueSubmitters);
 		return uniqueSubmitters;
 	}
-
 	convertHistoryDatesToCurrentLocale() {
 		this.historyHeaders.forEach(historyHeader => {
 			historyHeader.convertDateToCurrentLocale();
@@ -122,7 +131,6 @@ class HistoryHeader {
 	constructor(hhdr) {
 		this.hhdr = hhdr;
 	}
-
 	get date() {
 		if ("date" in this.hhdr.dataset) {
 			return new Date(this.hhdr.dataset.date);
@@ -135,7 +143,6 @@ class HistoryHeader {
 		this.hhdr.dataset.date = date.toJSON();
 		return date;
 	}
-
 	get submitter() {
 		if ("submitter" in this.hhdr.dataset) {
 			return this.hhdr.dataset.submitter;
@@ -147,7 +154,6 @@ class HistoryHeader {
 		this.hhdr.dataset.submitter = submitter;
 		return submitter;
 	}
-
 	convertDateToCurrentLocale() {
 		const date = this.date;
 		const childTextNodes = Array.from(this.hhdr.childNodes)
@@ -168,7 +174,9 @@ function makeStyleClasses() {
 	style.innerText = `
            .item {
              margin: 0px !important;
+             padding: 10px 10px 10px 20px !important;
              border-top-width: 0px !important;
+             border-radius: 0px 0px 10px 10px;
            }
            .jmd-footer {
              height: 90vh; /* prevent the scroll from jumping around when collapsing content near the bottom of the page */
@@ -176,27 +184,29 @@ function makeStyleClasses() {
            .collapse-button {
              cursor: pointer;
              padding: 5px 0px 5px 50px;
-             margin: 10px 0px 0px 0px;
+             margin: 2px 0px 0px 0px;
              width: 100%;
              text-align: left;
              border: solid thin black;
+             border-radius: 10px;
              font-size: 1em;
              scroll-margin-top: 50px;
            }
-           .active, .collapse-button:hover {
+           .collapse-button.active {
+             border-radius: 10px 10px 0px 0px;
            }
            .collapse-content {
              display: block;
              overflow: hidden;
            }
-           .collapse-content-hidden {
+           .cc-hidden {
              display: none;
              max-height: 0;
            }
-           .collapse-content-transition.collapse-content-hidden {
+           .cc-transition.cc-hidden {
              display: block;
            }
-           .collapse-content-transition {
+           .cc-transition {
              transition: max-height 0.5s ease;
            }
            `;
@@ -209,23 +219,6 @@ function convertDatesToCurrentLocale() {
 		const entry = new Entry(item);
 		entry.convertHistoryDatesToCurrentLocale();
 	});
-}
-
-
-class EntryGroup {
-	constructor(entry) {
-		this.entries = [entry];
-		this.maxDate = entry.date;
-	}
-	push(entry) {
-		this.entries.push(entry);
-		if (this.maxDate < entry.date) {
-			this.maxDate = entry.date;
-		}
-	}
-	sort() {
-		this.entries.sort((a, b) => b.date - a.date);
-	}
 }
 
 
@@ -262,24 +255,27 @@ function sortEntries() {
 
 function addCollapseButtons() {
 	const buttonClickListener = function() {
-		this.classList.toggle("active");
-		content = this.nextElementSibling;
-		if (content.classList.contains("collapse-content-hidden")) {
-			content.classList.add("collapse-content-transition");
+		const button = this;
+		const content = this.nextElementSibling;
+		button.classList.add("active");
+		content.classList.add("cc-transition");
+		if (content.classList.contains("cc-hidden")) {
 			content.style.maxHeight = content.scrollHeight + "px";
-			content.classList.remove("collapse-content-hidden");
+			content.classList.remove("cc-hidden");
 		} else {
-			content.classList.add("collapse-content-transition");
 			content.style.maxHeight = 0;
-			content.classList.add("collapse-content-hidden");
+			content.classList.add("cc-hidden");
 		}
 	}
 
 	const contentTransitionEndListener = function() {
-		this.classList.remove('collapse-content-transition');
+		const content = this;
 		const button = this.previousElementSibling;
-		if (!this.classList.contains("collapse-content-hidden")) {
-			button.scrollIntoView({ behavior: "smooth" });
+		content.classList.remove('cc-transition');
+		if (content.classList.contains("cc-hidden")) {
+			button.classList.remove("active");
+		} else {
+			//button.scrollIntoView({ behavior: "smooth" });
 		}
 	}
 
@@ -295,7 +291,7 @@ function addCollapseButtons() {
 		const collapseButton = document.createElement("button");
 
 		item.classList.add("collapse-content");
-		item.classList.add("collapse-content-hidden")
+		item.classList.add("cc-hidden")
 		collapseButton.classList.add("collapse-button");
 
 		const childNodes = [
