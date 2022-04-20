@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name        JMdictDB sort updates by time
+// @name        JMdictDB collapsible updates
 // @namespace   edrdg-scripts
 // @version     1.0
 // @author      Stephen Kraus
@@ -35,8 +35,13 @@ class EntryGroup {
 		}
 	}
 	sort() {
-		/* Todo: sort by ID if dates are equal */
-		this.entries.sort((a, b) => b.date - a.date);
+		this.entries.sort((a, b) => {
+			if (a.date == b.date) {
+				return b.id - a.id
+			} else {
+				return b.date - a.date
+			}
+		});
 	}
 }
 
@@ -56,11 +61,21 @@ class Entry {
 		});
 		return historyHeaders;
 	}
+	get id() {
+		if ("id" in this.item.dataset) {
+			return parseInt(this.item.dataset.id);
+		}
+		const parsedId = parseInt(this.item.querySelector(".pkid a").innerText);
+		const id = Number.isNaN(parsedId) ? 0 : parsedId;
+		this.item.dataset.id = id;
+		return id;
+	}
 	get sequence() {
 		if ("sequence" in this.item.dataset) {
-			return this.item.dataset.sequence;
+			return parseInt(this.item.dataset.sequence);
 		}
-		const sequence = this.item.querySelector("a").innerText;
+		const parsedSeq = parseInt(this.item.querySelector("a").innerText);
+		const sequence = Number.isNaN(parsedSeq) ? 0 : parsedSeq;
 		this.item.dataset.sequence = sequence;
 		return sequence;
 	}
@@ -183,6 +198,9 @@ function makeStyleClasses() {
            .jmd-footer {
              height: 90vh; /* prevent the scroll from jumping around when collapsing content near the bottom of the page */
            }
+           .collapse-container {
+             margin-left: calc(3vw * var(--order));
+           }
            .collapse-button {
              cursor: pointer;
              padding: 5px 0px 5px 50px;
@@ -208,7 +226,7 @@ function makeStyleClasses() {
              display: block;
            }
            .cc-transition {
-             transition: max-height 0.5s ease;
+             transition: max-height 0.2s ease;
            }
            `;
 	document.head.appendChild(style);
@@ -247,8 +265,9 @@ function sortEntries() {
 
 	entryGroups.forEach(entryGroup => {
 		entryGroup.sort();
-		entryGroup.entries.forEach(entry => {
+		entryGroup.entries.forEach((entry, index) => {
 			jmdContent.appendChild(entry.item);
+			entry.item.dataset.order = index;
 		});
 	});
 }
@@ -295,21 +314,27 @@ function addCollapseButtons() {
 		collapseContent.classList.add("collapse-content");
 		collapseContent.classList.add("cc-hidden");
 
-		item.parentNode.replaceChild(collapseContent, item)
+		const collapseContainer = document.createElement("div");
+		collapseContainer.classList.add("collapse-container");
+		collapseContainer.style = "--order:" + item.dataset.order;
+
+		item.parentNode.replaceChild(collapseContainer, item);
+		collapseContainer.appendChild(collapseButton);
+		collapseContainer.appendChild(collapseContent);
 		collapseContent.appendChild(item);
 
 		const entry = new Entry(item);
 		const childNodes = [
-			document.createTextNode(entry.date.toLocaleString(undefined, localeOptions)),
-			document.createTextNode(" - "),
-			document.createTextNode(entry.recentSubmitters.join(", ")),
-			document.createElement("br"),
 			document.createTextNode("#"),
 			document.createTextNode(entry.sequence),
 			document.createTextNode(" "),
 			createJapaneseTextNode("【" + entry.expression + "】"),
 			document.createTextNode(" "),
 			document.createTextNode(entry.status),
+			document.createElement("br"),
+			document.createTextNode(entry.date.toLocaleString(undefined, localeOptions)),
+			document.createTextNode(" - "),
+			document.createTextNode(entry.recentSubmitters.join(", ")),
 		];
 
 		childNodes.forEach(node => {
@@ -318,7 +343,6 @@ function addCollapseButtons() {
 
 		collapseButton.addEventListener("click", buttonClickListener, false);
 		collapseContent.addEventListener("transitionend", contentTransitionEndListener, false);
-		collapseContent.before(collapseButton);
 	});
 }
 
