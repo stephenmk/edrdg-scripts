@@ -12,7 +12,7 @@
 
 
 const localeOptions = {
-	year: "numeric",
+	year: "2-digit",
 	month: "numeric",
 	day: "numeric",
 	hour: "2-digit",
@@ -35,6 +35,7 @@ class EntryGroup {
 		}
 	}
 	sort() {
+		/* Todo: sort by ID if dates are equal */
 		this.entries.sort((a, b) => b.date - a.date);
 	}
 }
@@ -175,6 +176,7 @@ function makeStyleClasses() {
            .item {
              margin: 0px !important;
              padding: 10px 10px 10px 20px !important;
+             border: 0px 1px 1px 1px !important;
              border-top-width: 0px !important;
              border-radius: 0px 0px 10px 10px;
            }
@@ -187,7 +189,6 @@ function makeStyleClasses() {
              margin: 2px 0px 0px 0px;
              width: 100%;
              text-align: left;
-             border: solid thin black;
              border-radius: 10px;
              font-size: 1em;
              scroll-margin-top: 50px;
@@ -287,25 +288,28 @@ function addCollapseButtons() {
 	}
 
 	document.querySelectorAll(".item").forEach(item => {
-		const entry = new Entry(item);
 		const collapseButton = document.createElement("button");
-
-		item.classList.add("collapse-content");
-		item.classList.add("cc-hidden")
 		collapseButton.classList.add("collapse-button");
 
+		const collapseContent = document.createElement("div");
+		collapseContent.classList.add("collapse-content");
+		collapseContent.classList.add("cc-hidden");
+
+		item.parentNode.replaceChild(collapseContent, item)
+		collapseContent.appendChild(item);
+
+		const entry = new Entry(item);
 		const childNodes = [
-			document.createTextNode(entry.corpus),
-			document.createTextNode(" "),
+			document.createTextNode(entry.date.toLocaleString(undefined, localeOptions)),
+			document.createTextNode(" - "),
+			document.createTextNode(entry.recentSubmitters.join(", ")),
+			document.createElement("br"),
+			document.createTextNode("#"),
 			document.createTextNode(entry.sequence),
 			document.createTextNode(" "),
 			createJapaneseTextNode("【" + entry.expression + "】"),
 			document.createTextNode(" "),
 			document.createTextNode(entry.status),
-			document.createElement("br"),
-			document.createTextNode(entry.date.toLocaleString(undefined, localeOptions)),
-			document.createTextNode(" - "),
-			document.createTextNode(entry.recentSubmitters.join(", ")),
 		];
 
 		childNodes.forEach(node => {
@@ -313,8 +317,8 @@ function addCollapseButtons() {
 		});
 
 		collapseButton.addEventListener("click", buttonClickListener, false);
-		item.addEventListener("transitionend", contentTransitionEndListener, false);
-		item.before(collapseButton);
+		collapseContent.addEventListener("transitionend", contentTransitionEndListener, false);
+		collapseContent.before(collapseButton);
 	});
 }
 
