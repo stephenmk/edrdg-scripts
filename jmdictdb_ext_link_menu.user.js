@@ -25,12 +25,11 @@ const urls = {
 function makeLinkMenuStyleClasses() {
 	const style = document.createElement('style');
 	style.innerText = `
-          .linkMenuContainer {
+          .link-menu-container {
             position: relative;
             display: inline-block;
           }
-          .linkMenuButton {}
-          .linkMenuContent {
+          .link-menu-content {
             display: none;
             border-style: ridge;
             border-radius: 5px;
@@ -40,17 +39,18 @@ function makeLinkMenuStyleClasses() {
             box-shadow: 0px 20px 20px 0px rgba(0,0,0,0.5);
             z-index: 1;
           }
-          .linkMenuItem {
+          .link-menu-content.active {
+            display: block;
+          }
+          .link-menu-item {
             display: block;
             padding: 2px 0px 2px 20px;
           }
-          .linkMenuHeading {
+          .link-menu-heading {
             display: block;
             padding: 2px 0px 2px 2px;
           }
-          .linkMenuContent.active {
-            display: block;
-          }`;
+          `;
 	document.head.appendChild(style);
 }
 
@@ -71,7 +71,7 @@ function makeLinkMenuHideListener() {
 	const listener = (event) => {
 		let isLinkMenu = false;
 		event.target.classList.forEach(className => {
-			if (className.startsWith("linkMenu")) {
+			if (className.startsWith("link-menu")) {
 				isLinkMenu = true;
 			}
 		})
@@ -83,7 +83,7 @@ function makeLinkMenuHideListener() {
 
 
 function hideAllLinkMenus() {
-	document.querySelectorAll(".linkMenuContent.active").forEach(element => {
+	document.querySelectorAll(".link-menu-content.active").forEach(element => {
 		element.classList.remove('active')
 	})
 }
@@ -93,7 +93,7 @@ function makeLink(text, url, parameterList) {
 	const linkElement = document.createElement("a");
 	linkElement.textContent = text
 	linkElement.href = url + parameterList.join('+');
-	linkElement.classList.add("linkMenuItem");
+	linkElement.classList.add("link-menu-item");
 	return linkElement;
 }
 
@@ -101,8 +101,8 @@ function makeLink(text, url, parameterList) {
 function makeLinkHeading(text) {
 	const spanNode = document.createElement("span");
 	spanNode.textContent = "【" + text + "】";
-	spanNode.lang="ja";
-	spanNode.classList.add("linkMenuHeading");
+	spanNode.lang = "ja";
+	spanNode.classList.add("link-menu-heading");
 	return spanNode;
 }
 
@@ -140,18 +140,18 @@ function makeLinkMenus() {
 		})
 
 		const linkMenuContent = document.createElement("div");
-		linkMenuContent.classList.add("linkMenuContent");
+		linkMenuContent.classList.add("link-menu-content");
 		menuItems.forEach(menuItem => {
 			linkMenuContent.appendChild(menuItem);
 		})
 
 		const linkMenuButton = document.createElement("button");
-		linkMenuButton.classList.add("linkMenuButton");
+		linkMenuButton.classList.add("link-menu-button");
 		linkMenuButton.innerText = "External Links"
 		linkMenuButton.addEventListener("click", linkMenuButtonClick, false)
 
 		const linkMenuContainer = document.createElement("div");
-		linkMenuContainer.classList.add("linkMenuContainer");
+		linkMenuContainer.classList.add("link-menu-container");
 		linkMenuContainer.appendChild(linkMenuButton);
 		linkMenuContainer.appendChild(linkMenuContent);
 
