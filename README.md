@@ -6,25 +6,25 @@ such as [Greasemonkey](https://en.wikipedia.org/wiki/Greasemonkey).
 These are third-party scripts written by myself and not officially endorsed by or
 affiliated with the Electronic Dictionary Research and Development Group.
 
-### JMdictDB external links
-This script adds a menu of external links to JMdictDB entries. [[Install](https://github.com/stephenmk/edrdg-scripts/raw/main/jmdictdb_ext_link_menu.user.js)]
+### JMdictDB external links [[Install](https://github.com/stephenmk/edrdg-scripts/raw/main/jmdictdb_ext_link_menu.user.js)]
+This script adds a menu of external links to JMdictDB entries.
 
 <details>
   <summary>Example image</summary>
 
-  ![links.png](img/links.png)
+  ![links.png](img/links2.png)
 </details>
 
 
-### N-gram Corpus Count Percentages
+### N-gram Corpus Count Percentages [[Install](https://github.com/stephenmk/edrdg-scripts/raw/main/corpus_count_percentages.user.js)]
 This script adds usage percentages to the tables on the "N-gram Corpus Count" pages. It also adds an
 appropriate amount of whitespace to each cell so that the data will align nicely when copied and
-pasted into JMdictDB reference notes. [[Install](https://github.com/stephenmk/edrdg-scripts/raw/main/corpus_count_percentages.user.js)]
+pasted into JMdictDB reference notes.
 
 <details>
   <summary>Example image</summary>
 
-  ![counts.png](img/counts.png)
+  ![counts.png](img/counts2.png)
 </details>
 
 ## License
