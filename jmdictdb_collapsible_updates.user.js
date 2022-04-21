@@ -21,8 +21,6 @@ const localeOptions = {
 	hourCycle: "h12",
 };
 
-const timestampRegex = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/;
-
 
 class EntryTree {
 	constructor() {
@@ -44,7 +42,18 @@ class EntryTree {
 		if (this.graph[entry.parentId].includes(entry.id) === false)
 			this.graph[entry.parentId].push(entry.id);
 	}
-	childlessEntries() {
+	branches() {
+		const branches = [];
+		this.#childlessEntries().forEach(child => {
+			const branch = [child];
+			this.#ancestorEntries(child).forEach(ancestor => {
+				branch.push(ancestor);
+			})
+			branches.push(branch);
+		});
+		return branches;
+	}
+	#childlessEntries() {
 		const children = this.entries.filter(entry =>
 			this.graph[entry.id].length === 0
 		);
@@ -56,7 +65,7 @@ class EntryTree {
 		});
 		return children;
 	}
-	ancestorEntries(entry) {
+	#ancestorEntries(entry) {
 		const ancestors = [];
 		let parentId = entry.parentId;
 		while (parentId !== null && !ancestors.find(e => e.id === parentId)) {
@@ -69,17 +78,6 @@ class EntryTree {
 			}
 		}
 		return ancestors;
-	}
-	entryGroups() {
-		const entryGroups = [];
-		this.childlessEntries().forEach(child => {
-			const entryGroup = [child];
-			this.ancestorEntries(child).forEach(ancestor => {
-				entryGroup.push(ancestor);
-			})
-			entryGroups.push(entryGroup);
-		});
-		return entryGroups;
 	}
 }
 
@@ -94,7 +92,8 @@ class Entry {
 		}
 		const parsedId = parseInt(this.item.querySelector(".pkid a").innerText);
 		if (Number.isNaN(parsedId)) {
-			console.error("ID not found in entry", this.item);
+			console.error("ID not found in Entry", this.item);
+			throw new Error("Fatal error");
 		}
 		const id = Number.isNaN(parsedId) ? 0 : parsedId;
 		this.item.dataset.id = id;
@@ -198,40 +197,42 @@ class Entry {
 
 
 class HistoryHeader {
+	#hhdr;
+        #timestampRegex = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/;
 	constructor(hhdr) {
-		this.hhdr = hhdr;
+		this.#hhdr = hhdr;
 	}
 	get date() {
-		if ("date" in this.hhdr.dataset) {
-			return new Date(this.hhdr.dataset.date);
+		if ("date" in this.#hhdr.dataset) {
+			return new Date(this.#hhdr.dataset.date);
 		}
-		const timestamps = this.hhdr.innerText.match(timestampRegex);
+		const timestamps = this.#hhdr.innerText.match(this.#timestampRegex);
 		if (timestamps === null) {
 			timestamps = ["1970-01-01 00:00:00"];
 		}
 		const date = new Date(timestamps[0].replace(/-/g, "/") + " +0000");
-		this.hhdr.dataset.date = date.toJSON();
+		this.#hhdr.dataset.date = date.toJSON();
 		return date;
 	}
 	get submitter() {
-		if ("submitter" in this.hhdr.dataset) {
-			return this.hhdr.dataset.submitter;
+		if ("submitter" in this.#hhdr.dataset) {
+			return this.#hhdr.dataset.submitter;
 		}
-		const submitterText = this.hhdr.querySelector(".submitter_name").innerText;
+		const submitterText = this.#hhdr.querySelector(".submitter_name").innerText;
 		const submitter = submitterText == "" ?
 			"Anonymous" :
 			submitterText;
-		this.hhdr.dataset.submitter = submitter;
+		this.#hhdr.dataset.submitter = submitter;
 		return submitter;
 	}
 	convertDateToCurrentLocale() {
 		const date = this.date;
-		const childTextNodes = Array.from(this.hhdr.childNodes)
+		const childTextNodes = Array.from(this.#hhdr.childNodes)
 			.filter(n => n.nodeType == Node.TEXT_NODE);
 		childTextNodes.forEach(node => {
-			if (timestampRegex.test(node.textContent)) {
+			if (this.#timestampRegex.test(node.textContent)) {
 				const dateLocaleString = date.toLocaleString(undefined, localeOptions);
-				const newTextContent = node.textContent.replace(timestampRegex, dateLocaleString);
+				const newTextContent = node.textContent.replace(this.#timestampRegex, dateLocaleString);
 				node.textContent = newTextContent;
 			}
 		});
@@ -243,44 +244,16 @@ class CollapsibleContent {
 	constructor(entry) {
 		this.entry = entry;
 	}
-	createJapaneseTextNode(text) {
-		const span = document.createElement("span");
-		span.lang = "ja";
-		span.textContent = text;
-		return span;
-	}
 	makeNode(indent) {
-		const buttonClickListener = function() {
-			const button = this;
-			const content = this.nextElementSibling;
-			button.classList.add("active");
-			content.classList.add("cc-transition");
-			if (content.classList.contains("cc-hidden")) {
-				content.style.maxHeight = content.scrollHeight + "px";
-				content.classList.remove("cc-hidden");
-			} else {
-				content.style.maxHeight = 0;
-				content.classList.add("cc-hidden");
-			}
-		}
-
-		const contentTransitionEndListener = function() {
-			const content = this;
-			const button = this.previousElementSibling;
-			content.classList.remove('cc-transition');
-			if (content.classList.contains("cc-hidden")) {
-				button.classList.remove("active");
-			}
-		}
-
 		const collapseButton = document.createElement("button");
 		collapseButton.classList.add("collapse-button");
+		collapseButton.addEventListener("click", this.#buttonClickListener);
 
-		const childNodes = [
+		const buttonChildNodes = [
 			document.createTextNode("#"),
 			document.createTextNode(this.entry.sequence),
 			document.createTextNode(" "),
-			this.createJapaneseTextNode("【" + this.entry.expression + "】"),
+			this.#createJapaneseTextNode("【" + this.entry.expression + "】"),
 			document.createTextNode(" "),
 			document.createTextNode(this.entry.status),
 			document.createElement("br"),
@@ -289,13 +262,14 @@ class CollapsibleContent {
 			document.createTextNode(this.entry.recentSubmitters.join(", ")),
 		];
 
-		childNodes.forEach(node => {
+		buttonChildNodes.forEach(node => {
 			collapseButton.appendChild(node);
 		});
 
 		const collapseContent = document.createElement("div");
 		collapseContent.classList.add("collapse-content");
 		collapseContent.classList.add("cc-hidden");
+		collapseContent.addEventListener("transitionend", this.#contentTransitionEndListener);
 		collapseContent.appendChild(this.entry.item);
 
 		const collapseContainer = document.createElement("div");
@@ -304,10 +278,35 @@ class CollapsibleContent {
 		collapseContainer.appendChild(collapseButton);
 		collapseContainer.appendChild(collapseContent);
 
-		collapseButton.addEventListener("click", buttonClickListener, false);
-		collapseContent.addEventListener("transitionend", contentTransitionEndListener, false);
-
 		return collapseContainer;
+	}
+	#createJapaneseTextNode(text) {
+		const span = document.createElement("span");
+		span.lang = "ja";
+		span.textContent = text;
+		return span;
+	}
+	#buttonClickListener() {
+		const button = this;
+		const content = this.nextElementSibling;
+		button.classList.add("active");
+		content.classList.add("cc-transition");
+		if (content.classList.contains("cc-hidden")) {
+			/* todo: account for height of hidden history items */
+			content.style.maxHeight = content.scrollHeight + "px";
+			content.classList.remove("cc-hidden");
+		} else {
+			content.style.maxHeight = 0;
+			content.classList.add("cc-hidden");
+		}
+	}
+	#contentTransitionEndListener() {
+		const button = this.previousElementSibling;
+		const content = this;
+		content.classList.remove('cc-transition');
+		if (content.classList.contains("cc-hidden")) {
+			button.classList.remove("active");
+		}
 	}
 }
 
@@ -353,6 +352,7 @@ function makeStyleClasses() {
              display: block;
            }
            .cc-transition {
+             /* todo: even speed for different heights */
              transition: max-height 0.2s ease;
            }
            `;
@@ -367,15 +367,18 @@ function main() {
 
 	document.querySelectorAll(".item").forEach(item => {
 		const entry = new Entry(item);
-		entry.convertHistoryDatesToCurrentLocale();
 		entryTree.add(entry);
 	});
 
-	const entryGroups = entryTree.entryGroups();
+	entryTree.entries.forEach(entry => {
+		entry.convertHistoryDatesToCurrentLocale();
+	})
+
+	const entryBranches = entryTree.branches();
 	const documentBodyContent = document.querySelector(".jmd-content");
 
-	entryGroups.forEach(entryGroup => {
-		entryGroup.forEach((entry, index) => {
+	entryBranches.forEach(entryBranch => {
+		entryBranch.forEach((entry, index) => {
 			// index corresponds to the indent level of each entry
 			const cc = new CollapsibleContent(entry);
 			documentBodyContent.appendChild(cc.makeNode(index));
