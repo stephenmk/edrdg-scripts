@@ -1,12 +1,13 @@
 // ==UserScript==
-// @name        JMdictDB collapsible updates
-// @namespace   edrdg-scripts
-// @version     1.0
-// @author      Stephen Kraus
-// @match       *://*.edrdg.org/jmdictdb/cgi-bin/updates.py*
-// @icon        https://www.edrdg.org/favicon.ico
-// @grant       none
-// @run-at      document-end
+// @name           JMdictDB collapsible updates
+// @namespace      edrdg-scripts
+// @version        1.0
+// @author         Stephen Kraus
+// @match          *://*.edrdg.org/jmdictdb/cgi-bin/updates.py*
+// @exclude-match  *://*.edrdg.org/jmdictdb/cgi-bin/updates.py*&i=*
+// @icon           https://www.edrdg.org/favicon.ico
+// @grant          none
+// @run-at         document-end
 // ==/UserScript==
 'use strict';
 
@@ -23,25 +24,62 @@ const localeOptions = {
 const timestampRegex = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/;
 
 
-class EntryGroup {
-	constructor(entry) {
-		this.entries = [entry];
-		this.maxDate = entry.date;
+class EntryTree {
+	constructor() {
+		this.entries = [];
+		this.graph = {}; // parent ID -> array of children IDs
 	}
-	push(entry) {
-		this.entries.push(entry);
-		if (this.maxDate < entry.date) {
-			this.maxDate = entry.date;
+	add(entry) {
+		if (this.entries.find(e => e.id === entry.id)) {
+			console.warn("Attempted to add duplicate Entry to EntryTree", entry);
+			return;
 		}
+		this.entries.push(entry);
+		if (entry.id in this.graph === false)
+			this.graph[entry.id] = [];
+		if (entry.parentId === null)
+			return;
+		if (entry.parentId in this.graph === false)
+			this.graph[entry.parentId] = [];
+		if (this.graph[entry.parentId].includes(entry.id) === false)
+			this.graph[entry.parentId].push(entry.id);
 	}
-	sort() {
-		this.entries.sort((a, b) => {
-			if (a.date == b.date) {
-				return b.id - a.id
-			} else {
-				return b.date - a.date
-			}
+	childlessEntries() {
+		const children = this.entries.filter(entry =>
+			this.graph[entry.id].length === 0
+		);
+		children.sort((a, b) => {
+			if (a.date === b.date)
+				return b.id - a.id;
+			else
+				return b.date - a.date;
 		});
+		return children;
+	}
+	ancestorEntries(entry) {
+		const ancestors = [];
+		let parentId = entry.parentId;
+		while (parentId !== null && !ancestors.find(e => e.id === parentId)) {
+			const parent = this.entries.find(e => e.id === parentId);
+			if (parent === undefined) {
+				parentId = null;
+			} else {
+				parentId = parent.parentId;
+				ancestors.push(parent);
+			}
+		}
+		return ancestors;
+	}
+	entryGroups() {
+		const entryGroups = [];
+		this.childlessEntries().forEach(child => {
+			const entryGroup = [child];
+			this.ancestorEntries(child).forEach(ancestor => {
+				entryGroup.push(ancestor);
+			})
+			entryGroups.push(entryGroup);
+		});
+		return entryGroups;
 	}
 }
 
@@ -50,25 +88,30 @@ class Entry {
 	constructor(item) {
 		this.item = item;
 	}
-	get mostRecentHistoryHeader() {
-		const hhdr = this.item.querySelector(".hhdr");
-		return new HistoryHeader(hhdr);
-	}
-	get historyHeaders() {
-		const historyHeaders = [];
-		this.item.querySelectorAll(".hhdr").forEach(hhdr => {
-			historyHeaders.push(new HistoryHeader(hhdr));
-		});
-		return historyHeaders;
-	}
 	get id() {
 		if ("id" in this.item.dataset) {
 			return parseInt(this.item.dataset.id);
 		}
 		const parsedId = parseInt(this.item.querySelector(".pkid a").innerText);
+		if (Number.isNaN(parsedId)) {
+			console.error("ID not found in entry", this.item);
+		}
 		const id = Number.isNaN(parsedId) ? 0 : parsedId;
 		this.item.dataset.id = id;
 		return id;
+	}
+	get parentId() {
+		if ("parentId" in this.item.dataset) {
+			if (this.item.dataset.parentId === null) {
+				return null;
+			} else {
+				return parseInt(this.item.dataset.parentId);
+			}
+		}
+		const parsedParentId = parseInt(this.item.querySelector(".status a")?.innerText);
+		const parentId = Number.isNaN(parsedParentId) ? null : parsedParentId;
+		this.item.dataset.parentId = parentId;
+		return parentId;
 	}
 	get sequence() {
 		if ("sequence" in this.item.dataset) {
@@ -104,6 +147,17 @@ class Entry {
 			this.item.querySelector(".kanj").innerText;
 		this.item.dataset.expression = expression;
 		return expression;
+	}
+	get mostRecentHistoryHeader() {
+		const hhdr = this.item.querySelector(".hhdr");
+		return new HistoryHeader(hhdr);
+	}
+	get historyHeaders() {
+		const historyHeaders = [];
+		this.item.querySelectorAll(".hhdr").forEach(hhdr => {
+			historyHeaders.push(new HistoryHeader(hhdr));
+		});
+		return historyHeaders;
 	}
 	get date() {
 		if ("date" in this.item.dataset) {
@@ -185,6 +239,79 @@ class HistoryHeader {
 }
 
 
+class CollapsibleContent {
+	constructor(entry) {
+		this.entry = entry;
+	}
+	createJapaneseTextNode(text) {
+		const span = document.createElement("span");
+		span.lang = "ja";
+		span.textContent = text;
+		return span;
+	}
+	makeNode(indent) {
+		const buttonClickListener = function() {
+			const button = this;
+			const content = this.nextElementSibling;
+			button.classList.add("active");
+			content.classList.add("cc-transition");
+			if (content.classList.contains("cc-hidden")) {
+				content.style.maxHeight = content.scrollHeight + "px";
+				content.classList.remove("cc-hidden");
+			} else {
+				content.style.maxHeight = 0;
+				content.classList.add("cc-hidden");
+			}
+		}
+
+		const contentTransitionEndListener = function() {
+			const content = this;
+			const button = this.previousElementSibling;
+			content.classList.remove('cc-transition');
+			if (content.classList.contains("cc-hidden")) {
+				button.classList.remove("active");
+			}
+		}
+
+		const collapseButton = document.createElement("button");
+		collapseButton.classList.add("collapse-button");
+
+		const childNodes = [
+			document.createTextNode("#"),
+			document.createTextNode(this.entry.sequence),
+			document.createTextNode(" "),
+			this.createJapaneseTextNode("【" + this.entry.expression + "】"),
+			document.createTextNode(" "),
+			document.createTextNode(this.entry.status),
+			document.createElement("br"),
+			document.createTextNode(this.entry.date.toLocaleString(undefined, localeOptions)),
+			document.createTextNode(" - "),
+			document.createTextNode(this.entry.recentSubmitters.join(", ")),
+		];
+
+		childNodes.forEach(node => {
+			collapseButton.appendChild(node);
+		});
+
+		const collapseContent = document.createElement("div");
+		collapseContent.classList.add("collapse-content");
+		collapseContent.classList.add("cc-hidden");
+		collapseContent.appendChild(this.entry.item);
+
+		const collapseContainer = document.createElement("div");
+		collapseContainer.classList.add("collapse-container");
+		collapseContainer.style = "--indent: " + indent;
+		collapseContainer.appendChild(collapseButton);
+		collapseContainer.appendChild(collapseContent);
+
+		collapseButton.addEventListener("click", buttonClickListener, false);
+		collapseContent.addEventListener("transitionend", contentTransitionEndListener, false);
+
+		return collapseContainer;
+	}
+}
+
+
 function makeStyleClasses() {
 	const style = document.createElement('style');
 	style.innerText = `
@@ -199,7 +326,7 @@ function makeStyleClasses() {
              height: 90vh; /* prevent the scroll from jumping around when collapsing content near the bottom of the page */
            }
            .collapse-container {
-             margin-left: calc(3vw * var(--order));
+             margin-left: calc(3vw * var(--indent));
            }
            .collapse-button {
              cursor: pointer;
@@ -233,128 +360,27 @@ function makeStyleClasses() {
 }
 
 
-function convertDatesToCurrentLocale() {
+function main() {
+	makeStyleClasses();
+
+	const entryTree = new EntryTree();
+
 	document.querySelectorAll(".item").forEach(item => {
 		const entry = new Entry(item);
 		entry.convertHistoryDatesToCurrentLocale();
-	});
-}
-
-
-function sortEntries() {
-	const entries = [];
-
-	document.querySelectorAll(".item").forEach(item => {
-		entries.push(new Entry(item));
+		entryTree.add(entry);
 	});
 
-	const seqToGroups = entries.reduce((seqToGroups, entry) => {
-		const sequence = entry.sequence;
-		if (!seqToGroups[sequence]) {
-			seqToGroups[sequence] = new EntryGroup(entry);
-		} else {
-			seqToGroups[sequence].push(entry)
-		}
-		return seqToGroups;
-	}, {});
-
-	const jmdContent = document.querySelector(".jmd-content");
-
-	const entryGroups = Object.values(seqToGroups);
-	entryGroups.sort((a, b) => b.maxDate - a.maxDate);
+	const entryGroups = entryTree.entryGroups();
+	const documentBodyContent = document.querySelector(".jmd-content");
 
 	entryGroups.forEach(entryGroup => {
-		entryGroup.sort();
-		entryGroup.entries.forEach((entry, index) => {
-			jmdContent.appendChild(entry.item);
-			entry.item.dataset.order = index;
-		});
+		entryGroup.forEach((entry, index) => {
+			// index corresponds to the indent level of each entry
+			const cc = new CollapsibleContent(entry);
+			documentBodyContent.appendChild(cc.makeNode(index));
+		})
 	});
-}
-
-
-function addCollapseButtons() {
-	const buttonClickListener = function() {
-		const button = this;
-		const content = this.nextElementSibling;
-		button.classList.add("active");
-		content.classList.add("cc-transition");
-		if (content.classList.contains("cc-hidden")) {
-			content.style.maxHeight = content.scrollHeight + "px";
-			content.classList.remove("cc-hidden");
-		} else {
-			content.style.maxHeight = 0;
-			content.classList.add("cc-hidden");
-		}
-	}
-
-	const contentTransitionEndListener = function() {
-		const content = this;
-		const button = this.previousElementSibling;
-		content.classList.remove('cc-transition');
-		if (content.classList.contains("cc-hidden")) {
-			button.classList.remove("active");
-		} else {
-			//button.scrollIntoView({ behavior: "smooth" });
-		}
-	}
-
-	const createJapaneseTextNode = function(text) {
-		const span = document.createElement("span");
-		span.lang = "ja";
-		span.textContent = text;
-		return span;
-	}
-
-	document.querySelectorAll(".item").forEach(item => {
-		const collapseButton = document.createElement("button");
-		collapseButton.classList.add("collapse-button");
-
-		const collapseContent = document.createElement("div");
-		collapseContent.classList.add("collapse-content");
-		collapseContent.classList.add("cc-hidden");
-
-		const collapseContainer = document.createElement("div");
-		collapseContainer.classList.add("collapse-container");
-		collapseContainer.style = "--order:" + item.dataset.order;
-
-		item.parentNode.replaceChild(collapseContainer, item);
-		collapseContainer.appendChild(collapseButton);
-		collapseContainer.appendChild(collapseContent);
-		collapseContent.appendChild(item);
-
-		const entry = new Entry(item);
-		const childNodes = [
-			document.createTextNode("#"),
-			document.createTextNode(entry.sequence),
-			document.createTextNode(" "),
-			createJapaneseTextNode("【" + entry.expression + "】"),
-			document.createTextNode(" "),
-			document.createTextNode(entry.status),
-			document.createElement("br"),
-			document.createTextNode(entry.date.toLocaleString(undefined, localeOptions)),
-			document.createTextNode(" - "),
-			document.createTextNode(entry.recentSubmitters.join(", ")),
-		];
-
-		childNodes.forEach(node => {
-			collapseButton.appendChild(node);
-		});
-
-		collapseButton.addEventListener("click", buttonClickListener, false);
-		collapseContent.addEventListener("transitionend", contentTransitionEndListener, false);
-	});
-}
-
-
-function main() {
-	if (document.querySelectorAll(".rdng").length == 0) {
-		return;
-	}
-	makeStyleClasses();
-	convertDatesToCurrentLocale();
-	sortEntries();
-	addCollapseButtons();
 }
 
 
