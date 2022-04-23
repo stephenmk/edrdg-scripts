@@ -72,6 +72,7 @@ class EntryTree {
 		while (parentId !== null && !ancestors.find(e => e.id === parentId)) {
 			const parent = this.entries.find(e => e.id === parentId);
 			if (parent === undefined) {
+				// todo: fetch entry from web?
 				parentId = null;
 			} else {
 				parentId = parent.parentId;
@@ -196,6 +197,31 @@ class Entry {
 			historyHeader.convertDateToCurrentLocale();
 		});
 	}
+	createSummaryNode() {
+		const childNodes = [
+			document.createTextNode("#"),
+			document.createTextNode(this.sequence),
+			document.createTextNode(" "),
+			this.#createJapaneseTextNode("【" + this.expression + "】"),
+			document.createTextNode(" "),
+			document.createTextNode(this.status),
+			document.createElement("br"),
+			document.createTextNode(this.date.toLocaleString(undefined, localeOptions)),
+			document.createTextNode(" - "),
+			document.createTextNode(this.recentSubmitters.join(", ")),
+		];
+		const summaryNode = document.createElement("div");
+		childNodes.forEach(node => {
+			summaryNode.appendChild(node);
+		});
+		return summaryNode;
+	}
+	#createJapaneseTextNode(text) {
+		const span = document.createElement("span");
+		span.lang = "ja";
+		span.textContent = text;
+		return span;
+	}
 }
 
 
@@ -244,37 +270,17 @@ class HistoryHeader {
 
 
 class CollapsibleContent {
-	#entry;
-	constructor(entry) {
-		this.#entry = entry;
-	}
-	makeNode(indent) {
+	createNode(headerNode, contentNode, indent) {
 		const collapseButton = document.createElement("button");
 		collapseButton.classList.add("collapse-button");
 		collapseButton.addEventListener("click", this.#buttonClickListener);
-
-		const buttonChildNodes = [
-			document.createTextNode("#"),
-			document.createTextNode(this.#entry.sequence),
-			document.createTextNode(" "),
-			this.#createJapaneseTextNode("【" + this.#entry.expression + "】"),
-			document.createTextNode(" "),
-			document.createTextNode(this.#entry.status),
-			document.createElement("br"),
-			document.createTextNode(this.#entry.date.toLocaleString(undefined, localeOptions)),
-			document.createTextNode(" - "),
-			document.createTextNode(this.#entry.recentSubmitters.join(", ")),
-		];
-
-		buttonChildNodes.forEach(node => {
-			collapseButton.appendChild(node);
-		});
+		collapseButton.appendChild(headerNode);
 
 		const collapseContent = document.createElement("div");
 		collapseContent.classList.add("collapse-content");
 		collapseContent.classList.add("cc-hidden");
 		collapseContent.addEventListener("transitionend", this.#contentTransitionEndListener);
-		collapseContent.appendChild(this.#entry.item);
+		collapseContent.appendChild(contentNode);
 
 		const collapseContainer = document.createElement("div");
 		collapseContainer.classList.add("collapse-container");
@@ -283,12 +289,6 @@ class CollapsibleContent {
 		collapseContainer.appendChild(collapseContent);
 
 		return collapseContainer;
-	}
-	#createJapaneseTextNode(text) {
-		const span = document.createElement("span");
-		span.lang = "ja";
-		span.textContent = text;
-		return span;
 	}
 	#buttonClickListener() {
 		const button = this;
@@ -315,7 +315,7 @@ class CollapsibleContent {
 }
 
 
-function makeStyleClasses() {
+function createStyleClasses() {
 	const style = document.createElement('style');
 	style.innerText = `
            .item {
@@ -365,7 +365,7 @@ function makeStyleClasses() {
 
 
 function main() {
-	makeStyleClasses();
+	createStyleClasses();
 
 	const entryTree = new EntryTree();
 
@@ -379,13 +379,14 @@ function main() {
 	})
 
 	const entryBranches = entryTree.branches();
+	const cc = new CollapsibleContent();
 	const documentBodyContent = document.querySelector(".jmd-content");
 
 	entryBranches.forEach(entryBranch => {
 		entryBranch.forEach((entry, index) => {
 			// index corresponds to the indent level of each entry
-			const cc = new CollapsibleContent(entry);
-			documentBodyContent.appendChild(cc.makeNode(index));
+			const collapsibleEntryNode = cc.createNode(entry.createSummaryNode(), entry.item, index)
+			documentBodyContent.appendChild(collapsibleEntryNode);
 		})
 	});
 }
