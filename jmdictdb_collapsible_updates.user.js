@@ -23,9 +23,10 @@ const localeOptions = {
 
 
 class EntryTree {
+	#graph;
 	constructor() {
 		this.entries = [];
-		this.graph = {}; // parent ID -> array of children IDs
+		this.#graph = {}; // parent ID -> array of children IDs
 	}
 	add(entry) {
 		if (this.entries.find(e => e.id === entry.id)) {
@@ -33,14 +34,14 @@ class EntryTree {
 			return;
 		}
 		this.entries.push(entry);
-		if (entry.id in this.graph === false)
-			this.graph[entry.id] = [];
+		if (entry.id in this.#graph === false)
+			this.#graph[entry.id] = [];
 		if (entry.parentId === null)
 			return;
-		if (entry.parentId in this.graph === false)
-			this.graph[entry.parentId] = [];
-		if (this.graph[entry.parentId].includes(entry.id) === false)
-			this.graph[entry.parentId].push(entry.id);
+		if (entry.parentId in this.#graph === false)
+			this.#graph[entry.parentId] = [];
+		if (this.#graph[entry.parentId].includes(entry.id) === false)
+			this.#graph[entry.parentId].push(entry.id);
 	}
 	branches() {
 		const branches = [];
@@ -55,7 +56,7 @@ class EntryTree {
 	}
 	#childlessEntries() {
 		const children = this.entries.filter(entry =>
-			this.graph[entry.id].length === 0
+			this.#graph[entry.id].length === 0
 		);
 		children.sort((a, b) => {
 			if (a.date === b.date)
@@ -133,7 +134,9 @@ class Entry {
 		if ("status" in this.item.dataset) {
 			return this.item.dataset.status;
 		}
-		const status = this.item.querySelector(".status").innerText.trim();
+		const status = this.item.querySelector(".status .pend") ?
+			this.item.querySelector(".status .pend").innerText :
+			this.item.querySelector(".status").innerText;
 		this.item.dataset.status = status;
 		return status;
 	}
@@ -147,22 +150,11 @@ class Entry {
 		this.item.dataset.expression = expression;
 		return expression;
 	}
-	get mostRecentHistoryHeader() {
-		const hhdr = this.item.querySelector(".hhdr");
-		return new HistoryHeader(hhdr);
-	}
-	get historyHeaders() {
-		const historyHeaders = [];
-		this.item.querySelectorAll(".hhdr").forEach(hhdr => {
-			historyHeaders.push(new HistoryHeader(hhdr));
-		});
-		return historyHeaders;
-	}
 	get date() {
 		if ("date" in this.item.dataset) {
 			return new Date(this.item.dataset.date);
 		}
-		const date = this.mostRecentHistoryHeader.date;
+		const date = this.#mostRecentHistoryHeader.date;
 		this.item.dataset.date = date.toJSON();
 		return date;
 	}
@@ -176,7 +168,7 @@ class Entry {
 			return x;
 		})();
 		const submitters = [];
-		this.historyHeaders.forEach(historyHeader => {
+		this.#historyHeaders.forEach(historyHeader => {
 			const editDate = historyHeader.date;
 			const submitter = historyHeader.submitter;
 			if (oneWeekFromLastEdit < editDate) {
@@ -188,8 +180,19 @@ class Entry {
 		this.item.dataset.recentSubmitters = JSON.stringify(uniqueSubmitters);
 		return uniqueSubmitters;
 	}
+	get #mostRecentHistoryHeader() {
+		const hhdr = this.item.querySelector(".hhdr");
+		return new HistoryHeader(hhdr);
+	}
+	get #historyHeaders() {
+		const historyHeaders = [];
+		this.item.querySelectorAll(".hhdr").forEach(hhdr => {
+			historyHeaders.push(new HistoryHeader(hhdr));
+		});
+		return historyHeaders;
+	}
 	convertHistoryDatesToCurrentLocale() {
-		this.historyHeaders.forEach(historyHeader => {
+		this.#historyHeaders.forEach(historyHeader => {
 			historyHeader.convertDateToCurrentLocale();
 		});
 	}
@@ -198,7 +201,7 @@ class Entry {
 
 class HistoryHeader {
 	#hhdr;
-        #timestampRegex = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/;
+	#timestampRegex = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/;
 	constructor(hhdr) {
 		this.#hhdr = hhdr;
 	}
@@ -241,8 +244,9 @@ class HistoryHeader {
 
 
 class CollapsibleContent {
+	#entry;
 	constructor(entry) {
-		this.entry = entry;
+		this.#entry = entry;
 	}
 	makeNode(indent) {
 		const collapseButton = document.createElement("button");
@@ -251,15 +255,15 @@ class CollapsibleContent {
 
 		const buttonChildNodes = [
 			document.createTextNode("#"),
-			document.createTextNode(this.entry.sequence),
+			document.createTextNode(this.#entry.sequence),
 			document.createTextNode(" "),
-			this.#createJapaneseTextNode("【" + this.entry.expression + "】"),
+			this.#createJapaneseTextNode("【" + this.#entry.expression + "】"),
 			document.createTextNode(" "),
-			document.createTextNode(this.entry.status),
+			document.createTextNode(this.#entry.status),
 			document.createElement("br"),
-			document.createTextNode(this.entry.date.toLocaleString(undefined, localeOptions)),
+			document.createTextNode(this.#entry.date.toLocaleString(undefined, localeOptions)),
 			document.createTextNode(" - "),
-			document.createTextNode(this.entry.recentSubmitters.join(", ")),
+			document.createTextNode(this.#entry.recentSubmitters.join(", ")),
 		];
 
 		buttonChildNodes.forEach(node => {
@@ -270,7 +274,7 @@ class CollapsibleContent {
 		collapseContent.classList.add("collapse-content");
 		collapseContent.classList.add("cc-hidden");
 		collapseContent.addEventListener("transitionend", this.#contentTransitionEndListener);
-		collapseContent.appendChild(this.entry.item);
+		collapseContent.appendChild(this.#entry.item);
 
 		const collapseContainer = document.createElement("div");
 		collapseContainer.classList.add("collapse-container");
