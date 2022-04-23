@@ -23,10 +23,10 @@ const localeOptions = {
 
 
 class EntryTree {
-	#graph;
+	#graph; // parent ID -> array of children IDs
 	constructor() {
 		this.entries = [];
-		this.#graph = {}; // parent ID -> array of children IDs
+		this.#graph = {};
 	}
 	add(entry) {
 		if (this.entries.find(e => e.id === entry.id)) {
@@ -72,7 +72,7 @@ class EntryTree {
 		while (parentId !== null && !ancestors.find(e => e.id === parentId)) {
 			const parent = this.entries.find(e => e.id === parentId);
 			if (parent === undefined) {
-				// todo: fetch entry from web?
+				// todo: fetch entry from web / cache?
 				parentId = null;
 			} else {
 				parentId = parent.parentId;
@@ -85,83 +85,84 @@ class EntryTree {
 
 
 class Entry {
+	#item;
 	constructor(item) {
-		this.item = item;
+		this.#item = item;
 	}
 	get id() {
-		if ("id" in this.item.dataset) {
-			return parseInt(this.item.dataset.id);
+		if ("id" in this.#item.dataset) {
+			return parseInt(this.#item.dataset.id);
 		}
-		const parsedId = parseInt(this.item.querySelector(".pkid a").innerText);
+		const parsedId = parseInt(this.#item.querySelector(".pkid a").innerText);
 		if (Number.isNaN(parsedId)) {
-			console.error("ID not found in Entry", this.item);
+			console.error("ID not found in Entry", this.#item);
 			throw new Error("Fatal error");
 		}
 		const id = Number.isNaN(parsedId) ? 0 : parsedId;
-		this.item.dataset.id = id;
+		this.#item.dataset.id = id;
 		return id;
 	}
 	get parentId() {
-		if ("parentId" in this.item.dataset) {
-			if (this.item.dataset.parentId === null) {
+		if ("parentId" in this.#item.dataset) {
+			if (this.#item.dataset.parentId === null) {
 				return null;
 			} else {
-				return parseInt(this.item.dataset.parentId);
+				return parseInt(this.#item.dataset.parentId);
 			}
 		}
-		const parsedParentId = parseInt(this.item.querySelector(".status a")?.innerText);
+		const parsedParentId = parseInt(this.#item.querySelector(".status a")?.innerText);
 		const parentId = Number.isNaN(parsedParentId) ? null : parsedParentId;
-		this.item.dataset.parentId = parentId;
+		this.#item.dataset.parentId = parentId;
 		return parentId;
 	}
 	get sequence() {
-		if ("sequence" in this.item.dataset) {
-			return parseInt(this.item.dataset.sequence);
+		if ("sequence" in this.#item.dataset) {
+			return parseInt(this.#item.dataset.sequence);
 		}
-		const parsedSeq = parseInt(this.item.querySelector("a").innerText);
+		const parsedSeq = parseInt(this.#item.querySelector("a").innerText);
 		const sequence = Number.isNaN(parsedSeq) ? 0 : parsedSeq;
-		this.item.dataset.sequence = sequence;
+		this.#item.dataset.sequence = sequence;
 		return sequence;
 	}
 	get corpus() {
-		if ("corpus" in this.item.dataset) {
-			return this.item.dataset.corpus;
+		if ("corpus" in this.#item.dataset) {
+			return this.#item.dataset.corpus;
 		}
-		const corpus = this.item.innerText.match(/\w+\b/)[0];
-		this.item.dataset.corpus = corpus;
+		const corpus = this.#item.innerText.match(/\w+\b/)[0];
+		this.#item.dataset.corpus = corpus;
 		return corpus;
 	}
 	get status() {
-		if ("status" in this.item.dataset) {
-			return this.item.dataset.status;
+		if ("status" in this.#item.dataset) {
+			return this.#item.dataset.status;
 		}
-		const status = this.item.querySelector(".status .pend") ?
-			this.item.querySelector(".status .pend").innerText :
-			this.item.querySelector(".status").innerText;
-		this.item.dataset.status = status;
+		const status = this.#item.querySelector(".status .pend") ?
+			this.#item.querySelector(".status .pend").innerText :
+			this.#item.querySelector(".status").innerText;
+		this.#item.dataset.status = status;
 		return status;
 	}
 	get expression() {
-		if ("expression" in this.item.dataset) {
-			return this.item.dataset.expression;
+		if ("expression" in this.#item.dataset) {
+			return this.#item.dataset.expression;
 		}
-		const expression = this.item.querySelector(".kanj") === null ?
-			this.item.querySelector(".rdng").innerText :
-			this.item.querySelector(".kanj").innerText;
-		this.item.dataset.expression = expression;
+		const expression = this.#item.querySelector(".kanj") === null ?
+			this.#item.querySelector(".rdng").innerText :
+			this.#item.querySelector(".kanj").innerText;
+		this.#item.dataset.expression = expression;
 		return expression;
 	}
 	get date() {
-		if ("date" in this.item.dataset) {
-			return new Date(this.item.dataset.date);
+		if ("date" in this.#item.dataset) {
+			return new Date(this.#item.dataset.date);
 		}
-		const date = this.#mostRecentHistoryHeader.date;
-		this.item.dataset.date = date.toJSON();
+		const date = this.mostRecentHistoryHeader.date;
+		this.#item.dataset.date = date.toJSON();
 		return date;
 	}
 	get recentSubmitters() {
-		if ("recentSubmitters" in this.item.dataset) {
-			return JSON.parse(this.item.dataset.recentSubmitters);
+		if ("recentSubmitters" in this.#item.dataset) {
+			return JSON.parse(this.#item.dataset.recentSubmitters);
 		}
 		const oneWeekFromLastEdit = (() => {
 			const x = this.date;
@@ -169,7 +170,7 @@ class Entry {
 			return x;
 		})();
 		const submitters = [];
-		this.#historyHeaders.forEach(historyHeader => {
+		this.historyHeaders.forEach(historyHeader => {
 			const editDate = historyHeader.date;
 			const submitter = historyHeader.submitter;
 			if (oneWeekFromLastEdit < editDate) {
@@ -178,22 +179,23 @@ class Entry {
 		});
 		const uniqueSubmitters = [...(new Set(submitters))];
 		uniqueSubmitters.reverse();
-		this.item.dataset.recentSubmitters = JSON.stringify(uniqueSubmitters);
+		this.#item.dataset.recentSubmitters = JSON.stringify(uniqueSubmitters);
 		return uniqueSubmitters;
 	}
-	get #mostRecentHistoryHeader() {
-		const hhdr = this.item.querySelector(".hhdr");
+	get mostRecentHistoryHeader() {
+		const hhdr = this.#item.querySelector(".hhdr");
 		return new HistoryHeader(hhdr);
 	}
-	get #historyHeaders() {
+	get historyHeaders() {
 		const historyHeaders = [];
-		this.item.querySelectorAll(".hhdr").forEach(hhdr => {
+		this.#item.querySelectorAll(".hhdr").forEach(hhdr => {
 			historyHeaders.push(new HistoryHeader(hhdr));
 		});
 		return historyHeaders;
 	}
+	/* Should this instead be done during the createContentNode procedure? */
 	convertHistoryDatesToCurrentLocale() {
-		this.#historyHeaders.forEach(historyHeader => {
+		this.historyHeaders.forEach(historyHeader => {
 			historyHeader.convertDateToCurrentLocale();
 		});
 	}
@@ -215,6 +217,10 @@ class Entry {
 			summaryNode.appendChild(node);
 		});
 		return summaryNode;
+	}
+	createContentNode() {
+		const contentNode = this.#item.cloneNode(true);
+		return contentNode;
 	}
 	#createJapaneseTextNode(text) {
 		const span = document.createElement("span");
@@ -372,20 +378,20 @@ function main() {
 	document.querySelectorAll(".item").forEach(item => {
 		const entry = new Entry(item);
 		entryTree.add(entry);
+		item.remove();
 	});
 
 	entryTree.entries.forEach(entry => {
 		entry.convertHistoryDatesToCurrentLocale();
 	})
 
-	const entryBranches = entryTree.branches();
 	const cc = new CollapsibleContent();
 	const documentBodyContent = document.querySelector(".jmd-content");
 
-	entryBranches.forEach(entryBranch => {
+	entryTree.branches().forEach(entryBranch => {
 		entryBranch.forEach((entry, index) => {
 			// index corresponds to the indent level of each entry
-			const collapsibleEntryNode = cc.createNode(entry.createSummaryNode(), entry.item, index)
+			const collapsibleEntryNode = cc.createNode(entry.createSummaryNode(), entry.createContentNode(), index)
 			documentBodyContent.appendChild(collapsibleEntryNode);
 		})
 	});
