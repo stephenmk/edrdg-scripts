@@ -233,7 +233,7 @@ class Entry {
 
 class HistoryHeader {
 	#hhdr;
-	#timestampRegex = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/;
+	static #timestampRegex = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/;
 	constructor(hhdr) {
 		this.#hhdr = hhdr;
 	}
@@ -241,7 +241,7 @@ class HistoryHeader {
 		if ("date" in this.#hhdr.dataset) {
 			return new Date(this.#hhdr.dataset.date);
 		}
-		const timestamps = this.#hhdr.innerText.match(this.#timestampRegex);
+		const timestamps = this.#hhdr.innerText.match(HistoryHeader.#timestampRegex);
 		if (timestamps === null) {
 			timestamps = ["1970-01-01 00:00:00"];
 		}
@@ -265,9 +265,9 @@ class HistoryHeader {
 		const childTextNodes = Array.from(this.#hhdr.childNodes)
 			.filter(n => n.nodeType == Node.TEXT_NODE);
 		childTextNodes.forEach(node => {
-			if (this.#timestampRegex.test(node.textContent)) {
+			if (HistoryHeader.#timestampRegex.test(node.textContent)) {
 				const dateLocaleString = date.toLocaleString(undefined, localeOptions);
-				const newTextContent = node.textContent.replace(this.#timestampRegex, dateLocaleString);
+				const newTextContent = node.textContent.replace(HistoryHeader.#timestampRegex, dateLocaleString);
 				node.textContent = newTextContent;
 			}
 		});
