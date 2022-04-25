@@ -276,7 +276,7 @@ class HistoryHeader {
 
 
 class CollapsibleContent {
-	createNode(headerNode, contentNode, indent) {
+	createNode(headerNode, contentNode) {
 		const collapseButton = document.createElement("button");
 		collapseButton.classList.add("collapse-button");
 		collapseButton.addEventListener("click", this.#buttonClickListener);
@@ -290,7 +290,6 @@ class CollapsibleContent {
 
 		const collapseContainer = document.createElement("div");
 		collapseContainer.classList.add("collapse-container");
-		collapseContainer.style = "--indent: " + indent;
 		collapseContainer.appendChild(collapseButton);
 		collapseContainer.appendChild(collapseContent);
 
@@ -302,8 +301,7 @@ class CollapsibleContent {
 		button.classList.add("active");
 		content.classList.add("cc-transition");
 		if (content.classList.contains("cc-hidden")) {
-			/* todo: account for height of hidden history items */
-			content.style.maxHeight = content.scrollHeight + "px";
+			content.style.maxHeight = CollapsibleContent.getMaxScrollHeight(content) + "px";
 			content.classList.remove("cc-hidden");
 		} else {
 			content.style.maxHeight = 0;
@@ -318,12 +316,36 @@ class CollapsibleContent {
 			button.classList.remove("active");
 		}
 	}
+	static getMaxScrollHeight(content) {
+		const walkNodeTree = function(node, f) {
+			node.childNodes.forEach(node => {
+				f(node);
+				walkNodeTree(node, f);
+			})
+		}
+		const showNode = function(node) {
+			if (node.style?.display === "none") {
+				node.style.display = "block";
+				node.dataset.hideMe = true;
+			}
+		}
+		const hideNode = function(node) {
+			if (node.dataset?.hideMe) {
+				node.style.display = "none";
+				delete node.dataset.hideMe;
+			}
+		}
+		walkNodeTree(content, showNode);
+		const scrollHeight = content.scrollHeight;
+		walkNodeTree(content, hideNode);
+		return scrollHeight;
+	}
 }
 
 
-function createStyleClasses() {
-	const style = document.createElement('style');
-	style.innerText = `
+function createStyleNode() {
+	const styleNode = document.createElement('style');
+	styleNode.innerText = `
            .item {
              margin: 0px !important;
              padding: 10px 10px 10px 20px !important;
@@ -334,7 +356,7 @@ function createStyleClasses() {
            .jmd-footer {
              height: 90vh; /* prevent the scroll from jumping around when collapsing content near the bottom of the page */
            }
-           .collapse-container {
+           .indent {
              margin-left: calc(3vw * var(--indent));
            }
            .collapse-button {
@@ -366,12 +388,22 @@ function createStyleClasses() {
              transition: max-height 0.2s ease;
            }
            `;
-	document.head.appendChild(style);
+	return styleNode;
+}
+
+
+function createIndentNode(childNode, indent) {
+	const indentNode = document.createElement("div");
+	indentNode.classList.add("indent");
+	indentNode.style = "--indent: " + indent;
+	indentNode.appendChild(childNode);
+	return indentNode;
 }
 
 
 function main() {
-	createStyleClasses();
+	const styleNode = createStyleNode();
+	document.head.appendChild(styleNode);
 
 	const entryTree = new EntryTree();
 
@@ -390,9 +422,9 @@ function main() {
 
 	entryTree.branches().forEach(entryBranch => {
 		entryBranch.forEach((entry, index) => {
-			// index corresponds to the indent level of each entry
-			const collapsibleEntryNode = cc.createNode(entry.createSummaryNode(), entry.createContentNode(), index)
-			documentBodyContent.appendChild(collapsibleEntryNode);
+			const collapsibleEntryNode = cc.createNode(entry.createSummaryNode(), entry.createContentNode())
+			const indentedNode = createIndentNode(collapsibleEntryNode, index)
+			documentBodyContent.appendChild(indentedNode);
 		})
 	});
 }
