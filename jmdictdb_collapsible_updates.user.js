@@ -86,12 +86,21 @@ class EntryTree {
 
 class Entry {
 	#item;
+	#id;
+	#parentId;
+	#sequence;
+	#corpus;
+	#status;
+	#expression;
+	#date;
+	#recentSubmitters;
+	#historyHeaders;
 	constructor(item) {
 		this.#item = item;
 	}
 	get id() {
-		if ("id" in this.#item.dataset) {
-			return parseInt(this.#item.dataset.id);
+		if (this.#id !== undefined) {
+			return this.#id;
 		}
 		const parsedId = parseInt(this.#item.querySelector(".pkid a").innerText);
 		if (Number.isNaN(parsedId)) {
@@ -99,73 +108,69 @@ class Entry {
 			throw new Error("Fatal error");
 		}
 		const id = Number.isNaN(parsedId) ? 0 : parsedId;
-		this.#item.dataset.id = id;
+		this.#id = id;
 		return id;
 	}
 	get parentId() {
-		if ("parentId" in this.#item.dataset) {
-			if (this.#item.dataset.parentId === null) {
-				return null;
-			} else {
-				return parseInt(this.#item.dataset.parentId);
-			}
+		if (this.#parentId !== undefined) {
+			return this.#parentId;
 		}
 		const parsedParentId = parseInt(this.#item.querySelector(".status a")?.innerText);
 		const parentId = Number.isNaN(parsedParentId) ? null : parsedParentId;
-		this.#item.dataset.parentId = parentId;
+		this.#parentId = parentId;
 		return parentId;
 	}
 	get sequence() {
-		if ("sequence" in this.#item.dataset) {
-			return parseInt(this.#item.dataset.sequence);
+		if (this.#sequence !== undefined) {
+			return this.#sequence;
 		}
 		const parsedSeq = parseInt(this.#item.querySelector("a").innerText);
 		const sequence = Number.isNaN(parsedSeq) ? 0 : parsedSeq;
-		this.#item.dataset.sequence = sequence;
+		this.#sequence = sequence;
 		return sequence;
 	}
 	get corpus() {
-		if ("corpus" in this.#item.dataset) {
-			return this.#item.dataset.corpus;
+		if (this.#corpus !== undefined) {
+			return this.#corpus;
 		}
 		const corpus = this.#item.innerText.match(/\w+\b/)[0];
-		this.#item.dataset.corpus = corpus;
+		this.#corpus = corpus;
 		return corpus;
 	}
 	get status() {
-		if ("status" in this.#item.dataset) {
-			return this.#item.dataset.status;
+		if (this.#status !== undefined) {
+			return this.#status;
 		}
 		const status = this.#item.querySelector(".status .pend") ?
 			this.#item.querySelector(".status .pend").innerText :
 			this.#item.querySelector(".status").innerText;
-		this.#item.dataset.status = status;
+		this.#status = status;
 		return status;
 	}
 	get expression() {
-		if ("expression" in this.#item.dataset) {
-			return this.#item.dataset.expression;
+		if (this.#expression !== undefined) {
+			return this.#expression;
 		}
 		const expression = this.#item.querySelector(".kanj") === null ?
 			this.#item.querySelector(".rdng").innerText :
 			this.#item.querySelector(".kanj").innerText;
-		this.#item.dataset.expression = expression;
+		this.#expression = expression;
 		return expression;
 	}
 	get date() {
-		if ("date" in this.#item.dataset) {
-			return new Date(this.#item.dataset.date);
+		if (this.#date !== undefined) {
+			return this.#date;
 		}
-		const date = this.mostRecentHistoryHeader.date;
-		this.#item.dataset.date = date.toJSON();
+		const date = this.historyHeaders[0].date;
+		this.#date = date;
 		return date;
 	}
 	get recentSubmitters() {
-		if ("recentSubmitters" in this.#item.dataset) {
-			return JSON.parse(this.#item.dataset.recentSubmitters);
+		if (this.#recentSubmitters !== undefined) {
+			return this.#recentSubmitters;
 		}
 		const oneWeekFromLastEdit = (() => {
-			const x = this.date;
+			const x = new Date(this.date);
 			x.setDate(x.getDate() - 7);
 			return x;
 		})();
@@ -179,18 +184,18 @@ class Entry {
 		});
 		const uniqueSubmitters = [...(new Set(submitters))];
 		uniqueSubmitters.reverse();
-		this.#item.dataset.recentSubmitters = JSON.stringify(uniqueSubmitters);
+		this.#recentSubmitters = uniqueSubmitters;
 		return uniqueSubmitters;
 	}
-	get mostRecentHistoryHeader() {
-		const hhdr = this.#item.querySelector(".hhdr");
-		return new HistoryHeader(hhdr);
-	}
 	get historyHeaders() {
+		if (this.#historyHeaders !== undefined) {
+			return this.#historyHeaders;
+		}
 		const historyHeaders = [];
 		this.#item.querySelectorAll(".hhdr").forEach(hhdr => {
 			historyHeaders.push(new HistoryHeader(hhdr));
 		});
+		this.#historyHeaders = historyHeaders;
 		return historyHeaders;
 	}
 	/* Should this instead be done during the createContentNode procedure? */
@@ -232,14 +237,16 @@ class Entry {
 
 
 class HistoryHeader {
-	#hhdr;
 	static #timestampRegex = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/;
+	#hhdr;
+	#date;
+	#submitter;
 	constructor(hhdr) {
 		this.#hhdr = hhdr;
 	}
 	get date() {
-		if ("date" in this.#hhdr.dataset) {
-			return new Date(this.#hhdr.dataset.date);
+		if (this.#date !== undefined) {
+			return this.#date;
 		}
 		const timestamps = this.#hhdr.innerText.match(HistoryHeader.#timestampRegex);
 		if (timestamps === null) {
@@ -247,26 +254,26 @@ class HistoryHeader {
 		}
 		const date = new Date(timestamps[0].replace(/-/g, "/") + " +0000");
 		this.#hhdr.dataset.date = date.toJSON();
+		this.#date = date;
 		return date;
 	}
 	get submitter() {
-		if ("submitter" in this.#hhdr.dataset) {
-			return this.#hhdr.dataset.submitter;
+		if (this.#submitter !== undefined) {
+			return this.#submitter;
 		}
 		const submitterText = this.#hhdr.querySelector(".submitter_name").innerText;
 		const submitter = submitterText == "" ?
 			"Anonymous" :
 			submitterText;
-		this.#hhdr.dataset.submitter = submitter;
+		this.#submitter = submitter;
 		return submitter;
 	}
 	convertDateToCurrentLocale() {
-		const date = this.date;
 		const childTextNodes = Array.from(this.#hhdr.childNodes)
 			.filter(n => n.nodeType == Node.TEXT_NODE);
 		childTextNodes.forEach(node => {
 			if (HistoryHeader.#timestampRegex.test(node.textContent)) {
-				const dateLocaleString = date.toLocaleString(undefined, localeOptions);
+				const dateLocaleString = this.date.toLocaleString(undefined, localeOptions);
 				const newTextContent = node.textContent.replace(HistoryHeader.#timestampRegex, dateLocaleString);
 				node.textContent = newTextContent;
 			}
