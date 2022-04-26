@@ -270,7 +270,7 @@ class HistoryHeader {
 		return submitter;
 	}
 	convertDateToCurrentLocale() {
-		if (this.#date.getTime() === HistoryHeader.#nullDate.getTime())
+		if (this.date.getTime() === HistoryHeader.#nullDate.getTime())
 			return;
 		const childTextNodes = Array.from(this.#hhdr.childNodes)
 			.filter(n => n.nodeType == Node.TEXT_NODE);
