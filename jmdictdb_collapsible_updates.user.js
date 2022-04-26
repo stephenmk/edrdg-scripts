@@ -239,6 +239,7 @@ class Entry {
 
 class HistoryHeader {
 	static #timestampRegex = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/;
+	static #nullDate = new Date("1970/01/01 00:00:00 +0000");
 	#hhdr;
 	#date;
 	#submitter;
@@ -250,10 +251,9 @@ class HistoryHeader {
 			return this.#date;
 		}
 		const timestamps = this.#hhdr.innerText.match(HistoryHeader.#timestampRegex);
-		if (timestamps === null) {
-			timestamps = ["1970-01-01 00:00:00"];
-		}
-		const date = new Date(timestamps[0].replace(/-/g, "/") + " +0000");
+		const date = timestamps === null ?
+			new Date(HistoryHeader.#nullDate) :
+			new Date(timestamps[0].replace(/-/g, "/") + " +0000");
 		this.#hhdr.dataset.date = date.toJSON();
 		this.#date = date;
 		return date;
@@ -270,6 +270,8 @@ class HistoryHeader {
 		return submitter;
 	}
 	convertDateToCurrentLocale() {
+		if (this.#date === HistoryHeader.#nullDate)
+			return;
 		const childTextNodes = Array.from(this.#hhdr.childNodes)
 			.filter(n => n.nodeType == Node.TEXT_NODE);
 		childTextNodes.forEach(node => {
@@ -327,9 +329,9 @@ class CollapsibleContent {
 	}
 	static getMaxScrollHeight(content) {
 		const walkNodeTree = function(node, f) {
-			node.childNodes.forEach(node => {
-				f(node);
-				walkNodeTree(node, f);
+			node.childNodes.forEach(childNode => {
+				f(childNode);
+				walkNodeTree(childNode, f);
 			})
 		}
 		const showNode = function(node) {
