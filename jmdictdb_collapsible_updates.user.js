@@ -307,6 +307,7 @@ class CollapsibleContent {
 		const content = this.nextElementSibling;
 		button.classList.add("active");
 		content.classList.add("cc-transition");
+		content.style.transitionDuration = (content.scrollHeight / 2000) + "s";
 		if (content.classList.contains("cc-hidden")) {
 			content.style.maxHeight = CollapsibleContent.getMaxScrollHeight(content) + "px";
 			content.classList.remove("cc-hidden");
@@ -332,7 +333,7 @@ class CollapsibleContent {
 		}
 		const showNode = function(node) {
 			if (node.style?.display === "none") {
-				node.style.display = "block";
+				node.style.display = "";
 				node.dataset.hideMe = true;
 			}
 		}
@@ -391,8 +392,7 @@ function createStyleNode() {
              display: block;
            }
            .cc-transition {
-             /* todo: even speed for different heights */
-             transition: max-height 0.2s ease;
+             transition: max-height ease;
            }
            `;
 	return styleNode;
