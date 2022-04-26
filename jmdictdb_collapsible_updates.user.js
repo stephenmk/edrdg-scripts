@@ -29,6 +29,10 @@ class EntryTree {
 		this.#graph = {};
 	}
 	add(entry) {
+		if (!Number.isInteger(entry.id)) {
+			console.error("Entry must contain an integer ID", entry);
+			return;
+		}
 		if (this.entries.find(e => e.id === entry.id)) {
 			console.warn("Attempted to add duplicate Entry to EntryTree", entry);
 			return;
@@ -103,11 +107,7 @@ class Entry {
 			return this.#id;
 		}
 		const parsedId = parseInt(this.#item.querySelector(".pkid a").innerText);
-		if (Number.isNaN(parsedId)) {
-			console.error("ID not found in Entry", this.#item);
-			throw new Error("Fatal error");
-		}
-		const id = Number.isNaN(parsedId) ? 0 : parsedId;
+		const id = Number.isNaN(parsedId) ? null : parsedId;
 		this.#id = id;
 		return id;
 	}
@@ -224,6 +224,7 @@ class Entry {
 		return summaryNode;
 	}
 	createContentNode() {
+		this.#item.remove();
 		const contentNode = this.#item.cloneNode(true);
 		return contentNode;
 	}
@@ -375,7 +376,6 @@ function createStyleNode() {
              text-align: left;
              border-radius: 10px;
              font-size: 1em;
-             scroll-margin-top: 50px;
            }
            .collapse-button.active {
              border-radius: 10px 10px 0px 0px;
@@ -416,13 +416,9 @@ function main() {
 
 	document.querySelectorAll(".item").forEach(item => {
 		const entry = new Entry(item);
-		entryTree.add(entry);
-		item.remove();
-	});
-
-	entryTree.entries.forEach(entry => {
 		entry.convertHistoryDatesToCurrentLocale();
-	})
+		entryTree.add(entry);
+	});
 
 	const cc = new CollapsibleContent();
 	const documentBodyContent = document.querySelector(".jmd-content");
