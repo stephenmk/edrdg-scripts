@@ -174,18 +174,18 @@ class Entry {
 			x.setDate(x.getDate() - 7);
 			return x;
 		})();
-		const submitters = [];
+		const submitterSet = new Set();
 		this.historyHeaders.forEach(historyHeader => {
 			const editDate = historyHeader.date;
 			const submitter = historyHeader.submitter;
 			if (oneWeekFromLastEdit < editDate) {
-				submitters.push(submitter);
+				submitterSet.add(submitter);
 			}
 		});
-		const uniqueSubmitters = [...(new Set(submitters))];
-		uniqueSubmitters.reverse();
-		this.#recentSubmitters = uniqueSubmitters;
-		return uniqueSubmitters;
+		const submitters = [...submitterSet];
+		submitters.reverse();
+		this.#recentSubmitters = submitters;
+		return submitters;
 	}
 	get historyHeaders() {
 		if (this.#historyHeaders !== undefined) {
@@ -354,6 +354,103 @@ class CollapsibleContent {
 }
 
 
+class DateNavigation {
+	#pageURL;
+	#y;
+	#m;
+	#d;
+	#n;
+	#pageDate;
+	constructor(pageURL) {
+		this.#pageURL = pageURL;
+		this.#y = this.#parseParameter("y");
+		this.#m = this.#parseParameter("m");
+		this.#d = this.#parseParameter("d");
+		this.#n = this.#parseParameter("n");
+		this.#pageDate = this.#getPageDate();
+	}
+	#parseParameter(param) {
+		const urlParams = new URLSearchParams(this.#pageURL.search);
+		let val;
+		if (urlParams.has(param) && !Number.isNaN(parseInt(urlParams.get(param))))
+			val = parseInt(urlParams.get(param));
+		else
+			val = null;
+		return val;
+	}
+	#getPageDate() {
+		const date = new Date();
+		if (this.#y !== null)
+			date.setUTCFullYear(this.#y);
+		if (this.#m !== null)
+			date.setUTCMonth(this.#m - 1); // months range from 0 to 11 in javascript
+		if (this.#d !== null)
+			date.setUTCDate(this.#d);
+		if (this.#n !== null)
+			date.setUTCDate(date.getUTCDate() - this.#n)
+		// Invalid dates will be NaN
+		return Number.isNaN(date.getTime()) ? null : date;
+	}
+	createLinks() {
+		const container = document.createElement("div");
+		container.classList.add("date-navigation");
+		const todayLink = this.#createTodayLink();
+		todayLink.classList.add("date-navigation-today")
+		container.appendChild(todayLink);
+		const dateText = document.createElement("span");
+		dateText.textContent = "Updates for " + this.#pageDate.toLocaleDateString();
+		container.appendChild(dateText);
+		const nextLink = this.#createNextLink();
+		if (nextLink !== null) {
+			container.appendChild(nextLink);
+		}
+		const previousLink = this.#createPreviousLink();
+		if (previousLink !== null) {
+			container.appendChild(previousLink);
+		}
+		return container;
+	}
+	#createTodayLink() {
+		if (this.#y === null && this.#m === null && this.#d === null && this.#n === null)
+			return document.createElement("span");
+		const linkLocation = new URL(this.#pageURL);
+		linkLocation.searchParams.delete('y');
+		linkLocation.searchParams.delete('m');
+		linkLocation.searchParams.delete('d');
+		linkLocation.searchParams.delete('n');
+		return this.#createLinkElement(linkLocation.href, "Return to Today's Updates")
+	}
+	#createNextLink() {
+		return this.#createOffsetLink(1, "Next Day");
+	}
+	#createPreviousLink() {
+		return this.#createOffsetLink(-1, "Previous Day");
+	}
+	#createOffsetLink(offset, textContent) {
+		if (this.#pageDate === null) {
+			return null;
+		}
+		const linkDate = new Date(this.#pageDate);
+		linkDate.setUTCDate(linkDate.getUTCDate() + offset);
+		if ((new Date()).getTime() < linkDate.getTime())
+			// don't let the user browse to the future
+			return null;
+		const linkLocation = new URL(this.#pageURL);
+		linkLocation.searchParams.set('y', linkDate.getUTCFullYear());
+		linkLocation.searchParams.set('m', linkDate.getUTCMonth() + 1); // months range from 0 to 11 in javascript
+		linkLocation.searchParams.set('d', linkDate.getUTCDate());
+		linkLocation.searchParams.delete('n');
+		return this.#createLinkElement(linkLocation.href, textContent)
+	}
+	#createLinkElement(href, textContent) {
+		const link = document.createElement("a");
+		link.href = href;
+		link.textContent = textContent
+		return link;
+	}
+}
+
+
 function createStyleNode() {
 	const styleNode = document.createElement('style');
 	styleNode.innerText = `
@@ -366,6 +463,13 @@ function createStyleNode() {
            }
            .jmd-footer {
              height: 90vh; /* prevent the scroll from jumping around when collapsing content near the bottom of the page */
+           }
+           .date-navigation {
+             display: flex;
+             column-gap: 0.5rem;
+           }
+           .date-navigation-today {
+             flex-grow: 1;
            }
            .indent {
              margin-left: calc(3vw * var(--indent));
@@ -414,8 +518,13 @@ function main() {
 	const styleNode = createStyleNode();
 	document.head.appendChild(styleNode);
 
-	const entryTree = new EntryTree();
+	const documentBodyContent = document.querySelector(".jmd-content");
 
+	const dateNav = new DateNavigation(document.location);
+	const dateNavLinks = dateNav.createLinks();
+	documentBodyContent.appendChild(dateNavLinks);
+
+	const entryTree = new EntryTree();
 	document.querySelectorAll(".item").forEach(item => {
 		const entry = new Entry(item);
 		entry.convertHistoryDatesToCurrentLocale();
@@ -423,8 +532,6 @@ function main() {
 	});
 
 	const cc = new CollapsibleContent();
-	const documentBodyContent = document.querySelector(".jmd-content");
-
 	entryTree.branches().forEach(entryBranch => {
 		entryBranch.forEach((entry, index) => {
 			const collapsibleEntryNode = cc.createNode(entry.createSummaryNode(), entry.createContentNode())
