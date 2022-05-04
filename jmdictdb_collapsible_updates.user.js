@@ -95,6 +95,8 @@ class Entry {
 	#sequence;
 	#corpus;
 	#status;
+	#statusCode;
+	#isPending;
 	#expression;
 	#date;
 	#recentSubmitters;
@@ -146,6 +148,22 @@ class Entry {
 			this.#item.querySelector(".status").innerText;
 		this.#status = status;
 		return status;
+	}
+	get statusCode() {
+		if (this.#statusCode !== undefined) {
+			return this.#statusCode;
+		}
+		const statusCode = this.historyHeaders[0].statusCode;
+		this.#statusCode = statusCode;
+		return statusCode;
+	}
+	get isPending() {
+		if (this.#isPending !== undefined) {
+			return this.#isPending;
+		}
+		const isPending = this.historyHeaders[0].isPending;
+		this.#isPending = isPending;
+		return isPending;
 	}
 	get expression() {
 		if (this.#expression !== undefined) {
@@ -206,18 +224,15 @@ class Entry {
 	}
 	createSummaryNode() {
 		const childNodes = [
-			document.createTextNode("#"),
-			document.createTextNode(this.sequence),
 			document.createTextNode(" "),
-			this.#createJapaneseTextNode("【" + this.expression + "】"),
-			document.createTextNode(" "),
-			document.createTextNode(this.status),
-			document.createElement("br"),
+			document.createTextNode(this.statusCode),
+			document.createTextNode(" | "),
 			document.createTextNode(this.date.toLocaleString(undefined, localeOptions)),
-			document.createTextNode(" - "),
+			this.#createJapaneseTextNode("【" + this.expression + "】"),
 			document.createTextNode(this.recentSubmitters.join(", ")),
 		];
 		const summaryNode = document.createElement("div");
+		if (this.isPending) summaryNode.classList.add("pending")
 		childNodes.forEach(node => {
 			summaryNode.appendChild(node);
 		});
@@ -241,10 +256,28 @@ class HistoryHeader {
 	static #timestampRegex = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/;
 	static #nullDate = new Date("1970/01/01 00:00:00 +0000");
 	#hhdr;
+	#statusCode;
+	#isPending;
 	#date;
 	#submitter;
 	constructor(hhdr) {
 		this.#hhdr = hhdr;
+	}
+	get statusCode() {
+		if (this.#statusCode !== undefined) {
+			return this.#statusCode;
+		}
+		const statusCode = this.#hhdr.innerText.match(/^[ADR]/)[0];
+		this.#statusCode = statusCode;
+		return statusCode;
+	}
+	get isPending() {
+		if (this.#isPending !== undefined) {
+			return this.#isPending;
+		}
+		const isPending = /^[ADR]\*/.test(this.#hhdr.innerText);
+		this.#isPending = isPending;
+		return isPending;
 	}
 	get date() {
 		if (this.#date !== undefined) {
@@ -398,7 +431,7 @@ class DateNavigation {
 		todayLink.classList.add("date-navigation-today")
 		container.appendChild(todayLink);
 		const dateText = document.createElement("span");
-		dateText.textContent = "Updates for " + this.#pageDate.toLocaleDateString();
+		dateText.textContent = "Updates for " + this.#pageDate.toLocaleDateString([], { timeZone: "UTC" });
 		container.appendChild(dateText);
 		const nextLink = this.#createNextLink();
 		if (nextLink !== null) {
@@ -485,6 +518,12 @@ function createStyleNode() {
            }
            .collapse-button.active {
              border-radius: 10px 10px 0px 0px;
+           }
+           .collapse-button > .pending::before {
+             content: "＊";
+             position: absolute;
+             left: 30px;
+             margin-left: calc(3vw * var(--indent));
            }
            .collapse-content {
              display: block;
