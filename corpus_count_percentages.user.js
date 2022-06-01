@@ -45,7 +45,7 @@ function tableToText() {
 		if (includePercentages && checkbox.checked) {
 			text += percCell.innerText.padStart(6) + " |";
 		} else if (includePercentages) {
-			text += "  N/A% |";
+			text += "  N/A  |";
 		}
 
 		text += "\n";
