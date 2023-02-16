@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        edrdg N-gram Corpus Count Percentages
 // @namespace   edrdg-scripts
-// @version     1.2
+// @version     1.3
 // @author      Stephen Kraus
 // @match       *://*.edrdg.org/~jwb/cgi-bin/ngramlookup*
 // @icon        https://www.edrdg.org/favicon.ico
@@ -10,17 +10,34 @@
 // ==/UserScript==
 'use strict';
 
-
 const WORD_COL = 0;
 const COUNT_COL = 1;
 const PERC_COL = 2;
 
+const TOP_JUNCTIONS = ["╭", "┬", "╮"];
+const MID_JUNCTIONS = ["├", "┼", "┤"];
+const BOT_JUNCTIONS = ["╰", "┴", "╯"];
+
+function makeTableBorder(maxWordLength, maxCountCellLength, includePercentages, junctions) {
+	let text = ""
+	text += junctions[0] + "─"
+	text += "".padEnd(maxWordLength, "ー");
+	text += "─" + junctions[1] + "─"
+	text += "".padStart(maxCountCellLength, "─");
+
+	if (includePercentages) {
+		text += "─" + junctions[1]
+		text += "".padStart(6, "─")
+	}
+	text += "─" + junctions[2]
+	return text
+}
 
 function tableToText() {
 	let includePercentages = false;
 
 	document.querySelectorAll("tr").forEach(row => {
-		const checkbox = row.querySelector("INPUT");
+		const checkbox = row.querySelector("input");
 		if (checkbox.checked) {
 			includePercentages = true;
 		}
@@ -29,37 +46,44 @@ function tableToText() {
 	const maxWordLength = calculateMaxLength(WORD_COL);
 	const maxCountCellLength = calculateMaxLength(COUNT_COL);
 	let text = document.querySelector("h2").innerText + "\n";
+	text += makeTableBorder(maxWordLength, maxCountCellLength, includePercentages, TOP_JUNCTIONS);
+	text += "\n";
 
 	document.querySelectorAll("tr").forEach(row => {
 		const wordCell = row.cells[WORD_COL];
 		const countCell = row.cells[COUNT_COL];
 		const percCell = row.cells[PERC_COL];
-		const checkbox = row.querySelector("INPUT");
+		const checkbox = row.querySelector("input");
 
-		text += "| "
+		text += "│ "
 		text += wordCell.innerText.padEnd(maxWordLength, "　");
-		text += " | "
+		text += " │ "
 		text += countCell.innerText.padStart(maxCountCellLength);
-		text += " |"
+		text += " │"
 
 		if (includePercentages && checkbox.checked) {
-			text += percCell.innerText.padStart(6) + " |";
+			text += percCell.innerText.padStart(6) + " │";
 		} else if (includePercentages) {
-			text += "  N/A  |";
+			text += "  N/A  │";
 		}
 
 		text += "\n";
 	})
 
-	return text.substring(0, text.length - 1);;
-}
+	const partialTableCheckBox = document.querySelector("#partialTableCheckbox");
+	if (partialTableCheckBox.checked) {
+		text += makeTableBorder(maxWordLength, maxCountCellLength, includePercentages, MID_JUNCTIONS);
+	} else {
+		text += makeTableBorder(maxWordLength, maxCountCellLength, includePercentages, BOT_JUNCTIONS);
+	}
 
+	return text
+}
 
 function copyTableToClipboard() {
 	const tableText = tableToText();
 	GM_setClipboard(tableText);
 }
-
 
 function calculateMaxLength(column) {
 	let maxLength = 0;
@@ -73,18 +97,17 @@ function calculateMaxLength(column) {
 	return maxLength;
 }
 
-
 function displayPercentages() {
 	let totalCount = 0;
 	document.querySelectorAll("tr").forEach(row => {
-		const checkbox = row.querySelector("INPUT");
+		const checkbox = row.querySelector("input");
 		if (checkbox.checked) {
 			const countCell = row.cells[COUNT_COL];
 			totalCount += parseInt(countCell.dataset.count);
 		}
 	})
 	document.querySelectorAll("tr").forEach(row => {
-		const checkbox = row.querySelector("INPUT");
+		const checkbox = row.querySelector("input");
 		const countCell = row.cells[COUNT_COL];
 		const percCell = row.cells[PERC_COL];
 		if (checkbox.checked) {
@@ -97,17 +120,15 @@ function displayPercentages() {
 	})
 }
 
-
 function togglePercentages() {
-	const firstCheckBox = document.querySelector("INPUT");
+	const firstCheckBox = document.querySelector("input");
 	const toggle = !firstCheckBox.checked;
 	document.querySelectorAll("tr").forEach(row => {
-		const checkbox = row.querySelector("INPUT");
+		const checkbox = row.querySelector("input");
 		checkbox.checked = toggle;
 	})
 	displayPercentages();
 }
-
 
 function formatCounts() {
 	document.querySelectorAll("tr").forEach(row => {
@@ -123,7 +144,6 @@ function formatCounts() {
 	})
 }
 
-
 function main() {
 	formatCounts();
 
@@ -132,7 +152,7 @@ function main() {
 			const newCell = row.insertCell();
 			newCell.align = "right";
 		}
-		const checkBox = document.createElement("INPUT");
+		const checkBox = document.createElement("input");
 		checkBox.setAttribute("type", "checkbox");
 		checkBox.checked = true;
 		checkBox.addEventListener('change', displayPercentages);
@@ -151,6 +171,18 @@ function main() {
 	copyButton.addEventListener('click', copyTableToClipboard);
 	document.body.appendChild(copyButton);
 
+	const checkBox = document.createElement("input");
+	checkBox.setAttribute("type", "checkbox");
+	checkBox.checked = false;
+	checkBox.innerText = "Partial"
+	checkBox.id = "partialTableCheckbox"
+	document.body.appendChild(checkBox);
+
+	const checkBoxLabel = document.createElement("label");
+	checkBoxLabel.setAttribute("for", "partialTableCheckbox");
+	checkBoxLabel.innerText = "Partial Table"
+	document.body.appendChild(checkBoxLabel);
+
 	const style = document.createElement('style');
 	style.innerText = `
           tr td:nth-child(3) {
@@ -159,8 +191,8 @@ function main() {
 	document.head.appendChild(style);
 }
 
-
 // Starting the program this way prevents it from
 // running again on return visits to cached pages
 // (when running the program via greasemonkey).
-window.addEventListener("load", main, false);
+// window.addEventListener("load", main, false);
+main();
