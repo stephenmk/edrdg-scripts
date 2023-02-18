@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        edrdg N-gram group parser
 // @namespace   edrdg-scripts
-// @version     1.0
+// @version     1.1
 // @author      Stephen Kraus
 // @match       *://*.edrdg.org/~jwb/ngramcounts*
 // @icon        https://www.edrdg.org/favicon.ico
@@ -11,20 +11,20 @@
 'use strict';
 
 
-function partsToSearchTokens(parts) {
-	let tokens = [""];
+function partsToSearchTerms(parts) {
+	let terms = [""];
 	for (const part of parts) {
 		if (Array.isArray(part)) {
-			let newTokens = [];
+			let newTerms = [];
 			for (const innerPart of part) {
-				newTokens = newTokens.concat(tokens.map(token => token + innerPart));
+				newTerms = newTerms.concat(terms.map(term => term + innerPart));
 			}
-			tokens = newTokens;
+			terms = newTerms;
 		} else {
-			tokens = tokens.map(token => token + part);
+			terms = terms.map(term => term + part);
 		}
 	}
-	return tokens.join("；");
+	return terms;
 }
 
 
@@ -41,35 +41,55 @@ function partsToNormalizedString(parts) {
 }
 
 
-function insertIntoTable(parts) {
-	const normalized_string = partsToNormalizedString(parts);
-
-	let table = document.querySelector("#groupTable");
-	if (table === null) {
-		table = document.createElement("table");
-		table.id = "groupTable";
-		document.body.append(table);
+function groupTable() {
+	const queryTable = document.querySelector("#groupTable");
+	if (queryTable !== null) {
+		return queryTable;
 	}
-	const text_cell = document.createElement("td");
-	text_cell.innerText = normalized_string;
+
+	const headCell1 = document.createElement("th");
+	const headCell2 = document.createElement("th");
+	const headCell3 = document.createElement("th");
+	headCell1.innerText = "Term Count"
+	headCell2.innerText = "Group Expression"
+	headCell3.classList.add("button-cell")
+
+	const table = document.createElement("table");
+	table.id = "groupTable";
+
+	const headRow = table.insertRow();
+	headRow.append(headCell1, headCell2, headCell3);
+	document.body.appendChild(table);
+
+	return table;
+}
+
+
+function insertIntoTable(parts) {
+	const count_cell = document.createElement("td");
+	count_cell.innerText = partsToSearchTerms(parts).length;
+	count_cell.classList.add("count-cell");
+
+	const exp_cell = document.createElement("td");
+	exp_cell.innerText = partsToNormalizedString(parts);
 
 	const copy_button = document.createElement("button");
 	copy_button.type = "button";
 	copy_button.innerText = "Copy";
-	copy_button.minWidth = "75px";
 	copy_button.addEventListener('click', copyGroupText);
 	const copy_cell = document.createElement("td");
 	copy_cell.appendChild(copy_button);
+	copy_cell.classList.add("button-cell");
 
+	const table = groupTable();
 	const row = table.insertRow();
-	row.append(text_cell);
-	row.append(copy_cell);
+	row.append(count_cell, exp_cell, copy_cell);
 }
 
 
 function copyGroupText(e) {
 	const tableRow = e.target.parentElement.parentElement;
-	const text = tableRow.cells[0].innerText;
+	const text = tableRow.cells[1].innerText;
 	GM_setClipboard(text);
 }
 
@@ -78,8 +98,8 @@ function parseGroups() {
 	const textBox = document.querySelector("input");
 	const text = textBox.value;
 
-	const open = "{｛";
-	const close = "}｝";
+	const open = "{｛(（";
+	const close = "}｝)）";
 	const inner_delims = " ,、.。;；／";
 
 	if (!text.match(`[${open}]`)) {
@@ -108,8 +128,8 @@ function parseGroups() {
 		parts.push(inner_parts);
 	}
 
-	const newText = partsToSearchTokens(parts);
-	textBox.value = newText;
+	const terms = partsToSearchTerms(parts);
+	textBox.value = terms.join("；");
 
 	insertIntoTable(parts);
 }
@@ -128,6 +148,13 @@ function main() {
 
 	const style = document.createElement('style');
 	style.innerText = `
+          .count-cell {
+              text-align: right;
+          }
+          .button-cell {
+              border: none;
+              padding-left: 10px;
+          }
           td {
               border: 1px solid;
               padding: 5px;
