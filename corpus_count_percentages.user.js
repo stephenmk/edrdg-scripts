@@ -7,6 +7,8 @@
 // @icon        https://www.edrdg.org/favicon.ico
 // @grant       GM.setClipboard
 // @run-at      document-end
+// @homepageURL https://github.com/stephenmk/edrdg-scripts
+// @updateURL   https://github.com/stephenmk/edrdg-scripts/raw/main/corpus_count_percentages.user.js
 // ==/UserScript==
 'use strict';
 

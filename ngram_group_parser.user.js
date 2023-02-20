@@ -7,6 +7,8 @@
 // @icon        https://www.edrdg.org/favicon.ico
 // @grant       GM.setClipboard
 // @run-at      document-end
+// @homepageURL https://github.com/stephenmk/edrdg-scripts
+// @updateURL   https://github.com/stephenmk/edrdg-scripts/raw/main/ngram_group_parser.user.js
 // ==/UserScript==
 'use strict';
 

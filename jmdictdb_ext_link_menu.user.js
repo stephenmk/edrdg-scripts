@@ -9,6 +9,8 @@
 // @icon        https://www.edrdg.org/favicon.ico
 // @grant       none
 // @run-at      document-end
+// @homepageURL https://github.com/stephenmk/edrdg-scripts
+// @updateURL   https://github.com/stephenmk/edrdg-scripts/raw/main/jmdictdb_ext_link_menu.user.js
 // ==/UserScript==
 'use strict';
 

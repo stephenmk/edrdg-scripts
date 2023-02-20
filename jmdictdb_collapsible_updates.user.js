@@ -8,6 +8,8 @@
 // @icon           https://www.edrdg.org/favicon.ico
 // @grant          none
 // @run-at         document-end
+// @homepageURL    https://github.com/stephenmk/edrdg-scripts
+// @updateURL      https://github.com/stephenmk/edrdg-scripts/raw/main/jmdictdb_collapsible_updates.user.js
 // ==/UserScript==
 'use strict';
 
