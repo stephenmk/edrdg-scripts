@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        edrdg N-gram Corpus Count Percentages
 // @namespace   edrdg-scripts
-// @version     1.5
+// @version     1.6
 // @author      Stephen Kraus
 // @match       *://*.edrdg.org/~jwb/cgi-bin/ngramlookup*
 // @icon        https://www.edrdg.org/favicon.ico
@@ -147,8 +147,10 @@ function sortTable() {
 			const b_count = b.cells[COUNT_COL].dataset.count;
 			if (a_is_kana === b_is_kana) {
 				return b_count - a_count;
+			} else if (a_is_kana) {
+				return 1;
 			} else {
-				return a_is_kana;
+				return -1;
 			}
 		})
 		.forEach(tr => table.tBodies[0].appendChild(tr));
