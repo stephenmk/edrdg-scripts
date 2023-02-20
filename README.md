@@ -23,8 +23,8 @@ This script adds a menu of external links to JMdictDB entries.
 
 ## N-gram Term Combinations [[Install](https://github.com/stephenmk/edrdg-scripts/raw/main/ngram_group_parser.user.js)]
 
-This script adds a new syntax to the N-gram term lookup pages. An
-expression such as `｛思う／おもう｝｛壺／ツボ／つぼ／壷｝` can be
+This script adds a new syntax to the [N-gram term lookup pages](https://www.edrdg.org/~jwb/ngramcounts.html).
+An expression such as `｛思う／おもう｝｛壺／ツボ／つぼ／壷｝` can be
 expanded into eight search terms, i.e., the eight different
 combinations of 思う and おもう with 壺, ツボ, つぼ, and 壷.
 
@@ -37,7 +37,7 @@ One pitfall to be mindful of is that the N-gram server will fail if too many ter
 <details>
   <summary>Example video</summary>
 
-  ![N-gram Term Combinations Example video](img/group_demo.mp4)
+  https://user-images.githubusercontent.com/8003332/220212398-e7c1dff5-bd96-4bdd-b880-fc060ae34d95.mp4
 </details>
 
 
