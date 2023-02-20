@@ -5,7 +5,7 @@
 // @author      Stephen Kraus
 // @match       *://*.edrdg.org/~jwb/cgi-bin/ngramlookup*
 // @icon        https://www.edrdg.org/favicon.ico
-// @grant       GM.setClipboard
+// @grant       none
 // @run-at      document-end
 // @homepageURL https://github.com/stephenmk/edrdg-scripts
 // @updateURL   https://github.com/stephenmk/edrdg-scripts/raw/main/corpus_count_percentages.user.js
@@ -87,7 +87,9 @@ function tableToText() {
 
 function copyTableToClipboard() {
 	const tableText = tableToText();
-	GM.setClipboard(tableText);
+	if (navigator?.clipboard?.writeText) {
+		navigator.clipboard.writeText(tableText);
+	}
 }
 
 

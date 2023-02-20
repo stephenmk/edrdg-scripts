@@ -5,7 +5,7 @@
 // @author      Stephen Kraus
 // @match       *://*.edrdg.org/~jwb/ngramcounts*
 // @icon        https://www.edrdg.org/favicon.ico
-// @grant       GM.setClipboard
+// @grant       none
 // @run-at      document-end
 // @homepageURL https://github.com/stephenmk/edrdg-scripts
 // @updateURL   https://github.com/stephenmk/edrdg-scripts/raw/main/ngram_group_parser.user.js
@@ -92,7 +92,9 @@ function insertIntoTable(parts) {
 function copyGroupText(e) {
 	const tableRow = e.target.parentElement.parentElement;
 	const text = tableRow.cells[1].innerText;
-	GM.setClipboard(text);
+	if (navigator?.clipboard?.writeText) {
+		navigator.clipboard.writeText(text);
+	}
 }
 
 
