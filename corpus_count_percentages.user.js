@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name        edrdg N-gram Corpus Count Percentages
 // @namespace   edrdg-scripts
-// @version     1.4
+// @version     1.5
 // @author      Stephen Kraus
 // @match       *://*.edrdg.org/~jwb/cgi-bin/ngramlookup*
 // @icon        https://www.edrdg.org/favicon.ico
-// @grant       GM_setClipboard
+// @grant       GM.setClipboard
 // @run-at      document-end
 // ==/UserScript==
 'use strict';
@@ -85,7 +85,7 @@ function tableToText() {
 
 function copyTableToClipboard() {
 	const tableText = tableToText();
-	GM_setClipboard(tableText);
+	GM.setClipboard(tableText);
 }
 
 

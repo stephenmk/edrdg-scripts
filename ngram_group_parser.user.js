@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name        edrdg N-gram group parser
 // @namespace   edrdg-scripts
-// @version     1.1
+// @version     1.2
 // @author      Stephen Kraus
 // @match       *://*.edrdg.org/~jwb/ngramcounts*
 // @icon        https://www.edrdg.org/favicon.ico
-// @grant       GM_setClipboard
+// @grant       GM.setClipboard
 // @run-at      document-end
 // ==/UserScript==
 'use strict';
@@ -90,7 +90,7 @@ function insertIntoTable(parts) {
 function copyGroupText(e) {
 	const tableRow = e.target.parentElement.parentElement;
 	const text = tableRow.cells[1].innerText;
-	GM_setClipboard(text);
+	GM.setClipboard(text);
 }
 
 
