@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        edrdg N-gram Corpus Count Percentages
 // @namespace   edrdg-scripts
-// @version     1.6
+// @version     2023.02.20.0
 // @author      Stephen Kraus
 // @match       *://*.edrdg.org/~jwb/cgi-bin/ngramlookup*
 // @icon        https://www.edrdg.org/favicon.ico

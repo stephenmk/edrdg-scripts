@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        JMdictDB external links
 // @namespace   edrdg-scripts
-// @version     1.1
+// @version     2023.02.20.0
 // @author      Stephen Kraus
 // @match       *://*.edrdg.org/jmdictdb/cgi-bin/updates.py*
 // @match       *://*.edrdg.org/jmdictdb/cgi-bin/entr.py*

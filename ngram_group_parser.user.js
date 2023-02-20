@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        edrdg N-gram group parser
 // @namespace   edrdg-scripts
-// @version     1.2
+// @version     2023.02.20.0
 // @author      Stephen Kraus
 // @match       *://*.edrdg.org/~jwb/ngramcounts*
 // @icon        https://www.edrdg.org/favicon.ico
