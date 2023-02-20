@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           JMdictDB collapsible updates
 // @namespace      edrdg-scripts
-// @version        1.0
+// @version        1.1
 // @author         Stephen Kraus
 // @match          *://*.edrdg.org/jmdictdb/cgi-bin/updates.py*
 // @exclude-match  *://*.edrdg.org/jmdictdb/cgi-bin/updates.py*&i=*
@@ -11,7 +11,6 @@
 // ==/UserScript==
 'use strict';
 
-
 const localeOptions = {
 	year: "2-digit",
 	month: "numeric",
@@ -20,7 +19,6 @@ const localeOptions = {
 	minute: "2-digit",
 	hourCycle: "h12",
 };
-
 
 class EntryTree {
 	#graph; // parent ID -> array of children IDs
@@ -86,7 +84,6 @@ class EntryTree {
 		return ancestors;
 	}
 }
-
 
 class Entry {
 	#item;
@@ -187,16 +184,16 @@ class Entry {
 		if (this.#recentSubmitters !== undefined) {
 			return this.#recentSubmitters;
 		}
-		const oneWeekFromLastEdit = (() => {
+		const twoWeeksFromLastEdit = (() => {
 			const x = new Date(this.date);
-			x.setDate(x.getDate() - 7);
+			x.setDate(x.getDate() - 14);
 			return x;
 		})();
 		const submitterSet = new Set();
 		this.historyHeaders.forEach(historyHeader => {
 			const editDate = historyHeader.date;
 			const submitter = historyHeader.submitter;
-			if (oneWeekFromLastEdit < editDate) {
+			if (twoWeeksFromLastEdit < editDate) {
 				submitterSet.add(submitter);
 			}
 		});
@@ -250,7 +247,6 @@ class Entry {
 		return span;
 	}
 }
-
 
 class HistoryHeader {
 	static #timestampRegex = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/;
@@ -316,7 +312,6 @@ class HistoryHeader {
 		});
 	}
 }
-
 
 class CollapsibleContent {
 	createNode(headerNode, contentNode) {
@@ -385,7 +380,6 @@ class CollapsibleContent {
 		return scrollHeight;
 	}
 }
-
 
 class DateNavigation {
 	#pageURL;
@@ -483,7 +477,6 @@ class DateNavigation {
 	}
 }
 
-
 function createStyleNode() {
 	const styleNode = document.createElement('style');
 	styleNode.innerText = `
@@ -543,7 +536,6 @@ function createStyleNode() {
 	return styleNode;
 }
 
-
 function createIndentNode(childNode, indent) {
 	const indentNode = document.createElement("div");
 	indentNode.classList.add("indent");
@@ -551,7 +543,6 @@ function createIndentNode(childNode, indent) {
 	indentNode.appendChild(childNode);
 	return indentNode;
 }
-
 
 function main() {
 	const styleNode = createStyleNode();
@@ -580,8 +571,4 @@ function main() {
 	});
 }
 
-
-// Starting the program this way prevents it from
-// running again on return visits to cached pages
-// (when running the program via greasemonkey).
-window.addEventListener("load", main, false);
+main();

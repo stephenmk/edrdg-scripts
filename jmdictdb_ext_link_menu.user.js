@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        JMdictDB external links
 // @namespace   edrdg-scripts
-// @version     1.0
+// @version     1.1
 // @author      Stephen Kraus
 // @match       *://*.edrdg.org/jmdictdb/cgi-bin/updates.py*
 // @match       *://*.edrdg.org/jmdictdb/cgi-bin/entr.py*
@@ -12,15 +12,14 @@
 // ==/UserScript==
 'use strict';
 
-
 const urls = {
-	"google":   "https://www.edrdg.org/~jwb/cgi-bin/ngramlookup?sent=",
-	"km":       "https://www.edrdg.org/~jwb/cgi-bin/ngramlookupwww?sent=",
-	"kotobank": "https://kotobank.jp/gs/?q=",
-	"eijiro":   "https://eow.alc.co.jp/search?q=",
-	"wadoku":   "https://www.wadoku.de/search/?q="
+	"google":   "https://www.edrdg.org/~jwb/cgi-bin/ngramlookup?sent=$1",
+	"km":       "https://www.edrdg.org/~jwb/cgi-bin/ngramlookupwww?sent=$1",
+	"kotobank": "https://kotobank.jp/gs/?q=$1",
+	"eijiro":   "https://eow.alc.co.jp/search?q=$1",
+	"wadoku":   "https://www.wadoku.de/search/?q=$1",
+	"goo":      "https://dictionary.goo.ne.jp/srch/all/$1/m0u/"
 }
-
 
 function makeLinkMenuStyleClasses() {
 	const style = document.createElement('style');
@@ -54,7 +53,6 @@ function makeLinkMenuStyleClasses() {
 	document.head.appendChild(style);
 }
 
-
 // Toggle the display of the link menu on button clicks
 function linkMenuButtonClick() {
 	const linkMenuContent = this.nextElementSibling;
@@ -64,7 +62,6 @@ function linkMenuButtonClick() {
 		linkMenuContent.classList.add("active")
 	}
 }
-
 
 // Hide the menu after an outside click
 function makeLinkMenuHideListener() {
@@ -81,22 +78,19 @@ function makeLinkMenuHideListener() {
 	document.addEventListener("click", listener, false)
 }
 
-
 function hideAllLinkMenus() {
 	document.querySelectorAll(".link-menu-content.active").forEach(element => {
 		element.classList.remove('active')
 	})
 }
 
-
 function makeLink(text, url, parameterList) {
 	const linkElement = document.createElement("a");
 	linkElement.textContent = text
-	linkElement.href = url + parameterList.join('+');
+	linkElement.href = url.replace("$1", parameterList.join('+'));
 	linkElement.classList.add("link-menu-item");
 	return linkElement;
 }
-
 
 function makeLinkHeading(text) {
 	const spanNode = document.createElement("span");
@@ -105,7 +99,6 @@ function makeLinkHeading(text) {
 	spanNode.classList.add("link-menu-heading");
 	return spanNode;
 }
-
 
 function makeLinkMenus() {
 	document.querySelectorAll(".item").forEach(item => {
@@ -137,6 +130,7 @@ function makeLinkMenus() {
 			menuItems.push(makeLink("Kotobank", urls["kotobank"], [expression]))
 			menuItems.push(makeLink("Eijiro (ALC server)", urls["eijiro"], [expression]))
 			menuItems.push(makeLink("Wadoku", urls["wadoku"], [expression]))
+			menuItems.push(makeLink("Goo Jisho", urls["goo"], [expression]))
 		})
 
 		const linkMenuContent = document.createElement("div");
@@ -160,15 +154,10 @@ function makeLinkMenus() {
 	})
 }
 
-
 function main() {
 	makeLinkMenuStyleClasses();
 	makeLinkMenus()
 	makeLinkMenuHideListener();
 }
 
-
-// Starting the program this way prevents it from
-// running again on return visits to cached pages
-// (when running the program via greasemonkey).
-window.addEventListener("load", main, false);
+main();
