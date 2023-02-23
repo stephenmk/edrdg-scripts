@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        edrdg N-gram Corpus Count Percentages
 // @namespace   edrdg-scripts
-// @version     2023.02.20.0
+// @version     2023.02.22.0
 // @author      Stephen Kraus
 // @match       *://*.edrdg.org/~jwb/cgi-bin/ngramlookup*
 // @icon        https://www.edrdg.org/favicon.ico
@@ -195,6 +195,7 @@ function main() {
 			const newCell = row.insertCell();
 			newCell.align = "right";
 		}
+		row.cells[2].align = "right"; // for the "Top 10 N-grams Lookup" page
 		const checkBox = document.createElement("input");
 		checkBox.setAttribute("type", "checkbox");
 		checkBox.checked = true;
