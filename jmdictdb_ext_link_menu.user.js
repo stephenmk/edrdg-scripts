@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name        JMdictDB external links
 // @namespace   edrdg-scripts
-// @version     2023.02.20.0
+// @version     2023.09.08.0
 // @author      Stephen Kraus
-// @match       *://*.edrdg.org/jmdictdb/cgi-bin/updates.py*
-// @match       *://*.edrdg.org/jmdictdb/cgi-bin/entr.py*
-// @match       *://*.edrdg.org/jmdictdb/cgi-bin/edconf.py*
+// @match       *://*.edrdg.org/jmwsgi/updates.py*
+// @match       *://*.edrdg.org/jmwsgi/entr.py*
+// @match       *://*.edrdg.org/jmwsgi/edconf.py*
 // @icon        https://www.edrdg.org/favicon.ico
 // @grant       none
 // @run-at      document-end

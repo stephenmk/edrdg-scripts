@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name           JMdictDB collapsible updates
 // @namespace      edrdg-scripts
-// @version        2023.02.20.0
+// @version        2023.09.08.0
 // @author         Stephen Kraus
-// @match          *://*.edrdg.org/jmdictdb/cgi-bin/updates.py*
-// @exclude-match  *://*.edrdg.org/jmdictdb/cgi-bin/updates.py*&i=*
+// @match          *://*.edrdg.org/jmwsgi/updates.py*
+// @exclude-match  *://*.edrdg.org/jmwsgi/updates.py*&i=*
 // @icon           https://www.edrdg.org/favicon.ico
 // @grant          none
 // @run-at         document-end
