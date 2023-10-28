@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           JMdictDB collapsible updates
 // @namespace      edrdg-scripts
-// @version        2023.09.08.0
+// @version        2023.10.28.0
 // @author         Stephen Kraus
 // @match          *://*.edrdg.org/jmwsgi/updates.py*
 // @exclude-match  *://*.edrdg.org/jmwsgi/updates.py*&i=*
@@ -80,6 +80,7 @@ class EntryTree {
 				parentId = null;
 			} else {
 				parentId = parent.parentId;
+				parent.isViewed = true;
 				ancestors.push(parent);
 			}
 		}
@@ -215,6 +216,26 @@ class Entry {
 		this.#historyHeaders = historyHeaders;
 		return historyHeaders;
 	}
+	get isViewed() {
+		const viewedStorage = localStorage.getItem("jmdictdb-viewed-entries");
+		if (viewedStorage === null)
+			return false;
+		const viewedSequences = JSON.parse(viewedStorage);
+		if (this.sequence in viewedSequences === false)
+			return false;
+		const viewedIDs = viewedSequences[this.sequence];
+		if (this.id in viewedIDs === false)
+			return false
+		return viewedIDs[this.id]
+	}
+	set isViewed(value) {
+		const viewedStorage = localStorage.getItem("jmdictdb-viewed-entries");
+		const viewedSequences = viewedStorage !== null ? JSON.parse(viewedStorage) : {};
+		if (this.sequence in viewedSequences === false)
+			viewedSequences[this.sequence] = {};
+		viewedSequences[this.sequence][this.id] = value;
+		localStorage.setItem("jmdictdb-viewed-entries", JSON.stringify(viewedSequences));
+	}
 	/* Should this instead be done during the createContentNode procedure? */
 	convertHistoryDatesToCurrentLocale() {
 		this.historyHeaders.forEach(historyHeader => {
@@ -316,17 +337,25 @@ class HistoryHeader {
 }
 
 class CollapsibleContent {
-	createNode(headerNode, contentNode) {
+	createNode(entry) {
 		const collapseButton = document.createElement("button");
+		collapseButton.entry = entry;
 		collapseButton.classList.add("collapse-button");
+		if (!entry.isViewed)
+			collapseButton.classList.add("active");
 		collapseButton.addEventListener("click", this.#buttonClickListener);
+		const headerNode = entry.createSummaryNode();
 		collapseButton.appendChild(headerNode);
 
 		const collapseContent = document.createElement("div");
 		collapseContent.classList.add("collapse-content");
-		collapseContent.classList.add("cc-hidden");
-		collapseContent.addEventListener("transitionend", this.#contentTransitionEndListener);
+		const contentNode = entry.createContentNode();
 		collapseContent.appendChild(contentNode);
+		if (entry.isViewed) {
+			collapseContent.style.maxHeight = 0;
+			collapseContent.classList.add("cc-hidden");
+		}
+		collapseContent.addEventListener("transitionend", this.#contentTransitionEndListener);
 
 		const collapseContainer = document.createElement("div");
 		collapseContainer.classList.add("collapse-container");
@@ -338,13 +367,18 @@ class CollapsibleContent {
 	#buttonClickListener() {
 		const button = this;
 		const content = this.nextElementSibling;
+		const entry = this.entry;
+		if (content.style.maxHeight === "")
+			content.style.maxHeight = content.scrollHeight + "px";
 		button.classList.add("active");
 		content.classList.add("cc-transition");
 		content.style.transitionDuration = (content.scrollHeight / 3000) + "s";
 		if (content.classList.contains("cc-hidden")) {
+			entry.isViewed = false;
 			content.style.maxHeight = CollapsibleContent.getMaxScrollHeight(content) + "px";
 			content.classList.remove("cc-hidden");
 		} else {
+			entry.isViewed = true;
 			content.style.maxHeight = 0;
 			content.classList.add("cc-hidden");
 		}
@@ -566,8 +600,8 @@ function main() {
 	const cc = new CollapsibleContent();
 	entryTree.branches().forEach(entryBranch => {
 		entryBranch.forEach((entry, index) => {
-			const collapsibleEntryNode = cc.createNode(entry.createSummaryNode(), entry.createContentNode())
-			const indentedNode = createIndentNode(collapsibleEntryNode, index)
+			const node = cc.createNode(entry)
+			const indentedNode = createIndentNode(node, index)
 			documentBodyContent.appendChild(indentedNode);
 		})
 	});
