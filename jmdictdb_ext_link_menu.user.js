@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        JMdictDB external links
 // @namespace   edrdg-scripts
-// @version     2023.09.08.0
+// @version     2023.10.28.0
 // @author      Stephen Kraus
 // @match       *://*.edrdg.org/jmwsgi/updates.py*
 // @match       *://*.edrdg.org/jmwsgi/entr.py*
@@ -20,6 +20,7 @@ const urls = {
 	"kotobank": "https://kotobank.jp/gs/?q=$1",
 	"eijiro":   "https://eow.alc.co.jp/search?q=$1",
 	"wadoku":   "https://www.wadoku.de/search/?q=$1",
+	"weblio":   "https://www.weblio.jp/content/$1",
 	"goo":      "https://dictionary.goo.ne.jp/srch/all/$1/m0u/"
 }
 
@@ -130,9 +131,10 @@ function makeLinkMenus() {
 		linkExpressions.forEach(expression => {
 			menuItems.push(makeLinkHeading(expression))
 			menuItems.push(makeLink("Kotobank", urls["kotobank"], [expression]))
+			menuItems.push(makeLink("Goo Jisho", urls["goo"], [expression]))
+			menuItems.push(makeLink("Weblio", urls["weblio"], [expression]))
 			menuItems.push(makeLink("Eijiro (ALC server)", urls["eijiro"], [expression]))
 			menuItems.push(makeLink("Wadoku", urls["wadoku"], [expression]))
-			menuItems.push(makeLink("Goo Jisho", urls["goo"], [expression]))
 		})
 
 		const linkMenuContent = document.createElement("div");
