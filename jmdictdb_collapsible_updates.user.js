@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           JMdictDB collapsible updates
 // @namespace      edrdg-scripts
-// @version        2023.10.28.0
+// @version        2023.10.28.1
 // @author         Stephen Kraus
 // @match          *://*.edrdg.org/jmwsgi/updates.py*
 // @exclude-match  *://*.edrdg.org/jmwsgi/updates.py*&i=*
@@ -99,6 +99,7 @@ class Entry {
 	#isPending;
 	#expression;
 	#date;
+	#isViewed;
 	#recentSubmitters;
 	#historyHeaders;
 	constructor(item) {
@@ -217,6 +218,8 @@ class Entry {
 		return historyHeaders;
 	}
 	get isViewed() {
+		if (this.#isViewed !== undefined)
+			return this.#isViewed;
 		const viewedStorage = localStorage.getItem("jmdictdb-viewed-entries");
 		if (viewedStorage === null)
 			return false;
@@ -225,10 +228,12 @@ class Entry {
 			return false;
 		const viewedIDs = viewedSequences[this.sequence];
 		if (this.id in viewedIDs === false)
-			return false
-		return viewedIDs[this.id]
+			return false;
+		this.#isViewed = viewedIDs[this.id];
+		return this.#isViewed;
 	}
 	set isViewed(value) {
+		this.#isViewed = value;
 		const viewedStorage = localStorage.getItem("jmdictdb-viewed-entries");
 		const viewedSequences = viewedStorage !== null ? JSON.parse(viewedStorage) : {};
 		if (this.sequence in viewedSequences === false)
