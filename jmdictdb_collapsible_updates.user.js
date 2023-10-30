@@ -76,7 +76,6 @@ class EntryTree {
 		while (parentId !== null && !ancestors.find(e => e.id === parentId)) {
 			const parent = this.entries.find(e => e.id === parentId);
 			if (parent === undefined) {
-				// todo: fetch entry from web / cache?
 				parentId = null;
 			} else {
 				parentId = parent.parentId;
@@ -106,44 +105,39 @@ class Entry {
 		this.#item = item;
 	}
 	get id() {
-		if (this.#id !== undefined) {
+		if (this.#id !== undefined)
 			return this.#id;
-		}
 		const parsedId = parseInt(this.#item.querySelector(".pkid a").innerText);
 		const id = Number.isNaN(parsedId) ? null : parsedId;
 		this.#id = id;
 		return id;
 	}
 	get parentId() {
-		if (this.#parentId !== undefined) {
+		if (this.#parentId !== undefined)
 			return this.#parentId;
-		}
 		const parsedParentId = parseInt(this.#item.querySelector(".status a")?.innerText);
 		const parentId = Number.isNaN(parsedParentId) ? null : parsedParentId;
 		this.#parentId = parentId;
 		return parentId;
 	}
 	get sequence() {
-		if (this.#sequence !== undefined) {
+		if (this.#sequence !== undefined)
 			return this.#sequence;
-		}
 		const parsedSeq = parseInt(this.#item.querySelector("a").innerText);
 		const sequence = Number.isNaN(parsedSeq) ? 0 : parsedSeq;
 		this.#sequence = sequence;
 		return sequence;
 	}
 	get corpus() {
-		if (this.#corpus !== undefined) {
+		if (this.#corpus !== undefined)
 			return this.#corpus;
-		}
 		const corpus = this.#item.innerText.match(/\w+\b/)[0];
 		this.#corpus = corpus;
 		return corpus;
 	}
 	get status() {
-		if (this.#status !== undefined) {
+		if (this.#status !== undefined)
 			return this.#status;
-		}
 		const status = this.#item.querySelector(".status .pend") ?
 			this.#item.querySelector(".status .pend").innerText :
 			this.#item.querySelector(".status").innerText;
@@ -151,25 +145,22 @@ class Entry {
 		return status;
 	}
 	get statusCode() {
-		if (this.#statusCode !== undefined) {
+		if (this.#statusCode !== undefined)
 			return this.#statusCode;
-		}
 		const statusCode = this.historyHeaders[0].statusCode;
 		this.#statusCode = statusCode;
 		return statusCode;
 	}
 	get isPending() {
-		if (this.#isPending !== undefined) {
+		if (this.#isPending !== undefined)
 			return this.#isPending;
-		}
 		const isPending = this.historyHeaders[0].isPending;
 		this.#isPending = isPending;
 		return isPending;
 	}
 	get expression() {
-		if (this.#expression !== undefined) {
+		if (this.#expression !== undefined)
 			return this.#expression;
-		}
 		const expression = this.#item.querySelector(".kanj") === null ?
 			this.#item.querySelector(".rdng").innerText :
 			this.#item.querySelector(".kanj").innerText;
@@ -177,17 +168,15 @@ class Entry {
 		return expression;
 	}
 	get date() {
-		if (this.#date !== undefined) {
+		if (this.#date !== undefined)
 			return this.#date;
-		}
 		const date = this.historyHeaders[0].date;
 		this.#date = date;
 		return date;
 	}
 	get recentSubmitters() {
-		if (this.#recentSubmitters !== undefined) {
+		if (this.#recentSubmitters !== undefined)
 			return this.#recentSubmitters;
-		}
 		const twoWeeksFromLastEdit = (() => {
 			const x = new Date(this.date);
 			x.setDate(x.getDate() - 14);
@@ -197,9 +186,8 @@ class Entry {
 		this.historyHeaders.forEach(historyHeader => {
 			const editDate = historyHeader.date;
 			const submitter = historyHeader.submitter;
-			if (twoWeeksFromLastEdit < editDate) {
+			if (twoWeeksFromLastEdit < editDate)
 				submitterSet.add(submitter);
-			}
 		});
 		const submitters = [...submitterSet];
 		submitters.reverse();
@@ -207,9 +195,8 @@ class Entry {
 		return submitters;
 	}
 	get historyHeaders() {
-		if (this.#historyHeaders !== undefined) {
+		if (this.#historyHeaders !== undefined)
 			return this.#historyHeaders;
-		}
 		const historyHeaders = [];
 		this.#item.querySelectorAll(".hhdr").forEach(hhdr => {
 			historyHeaders.push(new HistoryHeader(hhdr));
@@ -257,7 +244,8 @@ class Entry {
 			document.createTextNode(this.recentSubmitters.join(", ")),
 		];
 		const summaryNode = document.createElement("div");
-		if (this.isPending) summaryNode.classList.add("pending")
+		if (this.isPending)
+			summaryNode.classList.add("pending")
 		childNodes.forEach(node => {
 			summaryNode.appendChild(node);
 		});
@@ -288,25 +276,22 @@ class HistoryHeader {
 		this.#hhdr = hhdr;
 	}
 	get statusCode() {
-		if (this.#statusCode !== undefined) {
+		if (this.#statusCode !== undefined)
 			return this.#statusCode;
-		}
 		const statusCode = this.#hhdr.innerText.match(/^[ADR]/)[0];
 		this.#statusCode = statusCode;
 		return statusCode;
 	}
 	get isPending() {
-		if (this.#isPending !== undefined) {
+		if (this.#isPending !== undefined)
 			return this.#isPending;
-		}
 		const isPending = /^[ADR]\*/.test(this.#hhdr.innerText);
 		this.#isPending = isPending;
 		return isPending;
 	}
 	get date() {
-		if (this.#date !== undefined) {
+		if (this.#date !== undefined)
 			return this.#date;
-		}
 		const timestamps = this.#hhdr.innerText.match(HistoryHeader.#timestampRegex);
 		const date = timestamps === null ?
 			new Date(HistoryHeader.#nullDate) :
@@ -316,9 +301,8 @@ class HistoryHeader {
 		return date;
 	}
 	get submitter() {
-		if (this.#submitter !== undefined) {
+		if (this.#submitter !== undefined)
 			return this.#submitter;
-		}
 		const submitterText = this.#hhdr.querySelector(".submitter_name").innerText;
 		const submitter = submitterText == "" ?
 			"Anonymous" :
@@ -392,9 +376,8 @@ class CollapsibleContent {
 		const button = this.previousElementSibling;
 		const content = this;
 		content.classList.remove('cc-transition');
-		if (content.classList.contains("cc-hidden")) {
+		if (content.classList.contains("cc-hidden"))
 			button.classList.remove("active");
-		}
 	}
 	static getMaxScrollHeight(content) {
 		const walkNodeTree = function(node, f) {
@@ -469,13 +452,11 @@ class DateNavigation {
 		dateText.textContent = "Updates for " + this.#pageDate.toLocaleDateString([], { timeZone: "UTC" });
 		container.appendChild(dateText);
 		const nextLink = this.#createNextLink();
-		if (nextLink !== null) {
+		if (nextLink !== null)
 			container.appendChild(nextLink);
-		}
 		const previousLink = this.#createPreviousLink();
-		if (previousLink !== null) {
+		if (previousLink !== null)
 			container.appendChild(previousLink);
-		}
 		return container;
 	}
 	#createTodayLink() {
@@ -495,14 +476,12 @@ class DateNavigation {
 		return this.#createOffsetLink(-1, "Previous Day");
 	}
 	#createOffsetLink(offset, textContent) {
-		if (this.#pageDate === null) {
+		if (this.#pageDate === null)
 			return null;
-		}
 		const linkDate = new Date(this.#pageDate);
 		linkDate.setUTCDate(linkDate.getUTCDate() + offset);
 		if ((new Date()).getTime() < linkDate.getTime())
-			// don't let the user browse to the future
-			return null;
+			return null; // don't let the user browse to the future
 		const linkLocation = new URL(this.#pageURL);
 		linkLocation.searchParams.set('y', linkDate.getUTCFullYear());
 		linkLocation.searchParams.set('m', linkDate.getUTCMonth() + 1); // months range from 0 to 11 in javascript
