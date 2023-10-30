@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           JMdictDB collapsible updates
 // @namespace      edrdg-scripts
-// @version        2023.10.30.0
+// @version        2023.10.30.1
 // @author         Stephen Kraus
 // @match          *://*.edrdg.org/jmwsgi/updates.py*
 // @exclude-match  *://*.edrdg.org/jmwsgi/updates.py*&i=*
@@ -239,32 +239,41 @@ class HistoryHeader {
 
 class CollapsibleContent {
 	createNode(entry) {
-		const collapseButton = document.createElement("button");
-		collapseButton.entry = entry;
-		collapseButton.classList.add("collapse-button");
+		const button = this.#createCollapseButton(entry);
+		const content = this.#createCollapseContent(entry);
+		const container = this.#createCollapseContainer(entry);
+		container.appendChild(button);
+		container.appendChild(content);
+		return container;
+	}
+	#createCollapseButton(entry) {
+		const button = document.createElement("button");
+		button.entry = entry;
+		button.classList.add("collapse-button");
 		if (!entry.isViewed)
-			collapseButton.classList.add("active");
-		collapseButton.addEventListener("click", this.#buttonClickListener);
+			button.classList.add("active");
+		button.addEventListener("click", this.#buttonClickListener);
 		const headerNode = this.#createSummaryNode(entry);
-		collapseButton.appendChild(headerNode);
-
-		const collapseContent = document.createElement("div");
-		collapseContent.classList.add("collapse-content");
+		button.appendChild(headerNode);
+		return button;
+	}
+	#createCollapseContent(entry) {
+		const content = document.createElement("div");
+		content.classList.add("collapse-content");
 		const contentNode = entry.item;
-		collapseContent.appendChild(contentNode);
+		content.appendChild(contentNode);
 		if (entry.isViewed) {
-			collapseContent.style.maxHeight = 0;
-			collapseContent.classList.add("cc-hidden");
+			content.style.maxHeight = 0;
+			content.classList.add("cc-hidden");
 		}
-		collapseContent.addEventListener("transitionend", this.#contentTransitionEndListener);
-
-		const collapseContainer = document.createElement("div");
-		collapseContainer.classList.add("collapse-container");
-		collapseContainer.dataset.corpus = entry.corpus;
-		collapseContainer.appendChild(collapseButton);
-		collapseContainer.appendChild(collapseContent);
-
-		return collapseContainer;
+		content.addEventListener("transitionend", this.#contentTransitionEndListener);
+		return content;
+	}
+	#createCollapseContainer(entry) {
+		const container = document.createElement("div");
+		container.classList.add("collapse-container");
+		container.dataset.corpus = entry.corpus;
+		return container;
 	}
 	#createSummaryNode(entry) {
 		const childNodes = [
@@ -277,7 +286,7 @@ class CollapsibleContent {
 		];
 		const summaryNode = document.createElement("div");
 		if (entry.isPending)
-			summaryNode.classList.add("pending")
+			summaryNode.classList.add("pending");
 		childNodes.forEach(node => {
 			summaryNode.appendChild(node);
 		});
