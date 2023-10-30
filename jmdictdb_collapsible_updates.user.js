@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           JMdictDB collapsible updates
 // @namespace      edrdg-scripts
-// @version        2023.10.29.2
+// @version        2023.10.30.0
 // @author         Stephen Kraus
 // @match          *://*.edrdg.org/jmwsgi/updates.py*
 // @exclude-match  *://*.edrdg.org/jmwsgi/updates.py*&i=*
@@ -89,109 +89,67 @@ class EntryTree {
 
 class Entry {
 	#item;
-	#doCloneItem;
-	#id;
-	#parentId;
-	#sequence;
-	#corpus;
-	#status;
-	#statusCode;
-	#isPending;
-	#expression;
-	#date;
 	#isViewed;
-	#recentSubmitters;
-	#historyHeaders;
 	constructor(item) {
 		this.#item = item;
-		this.#doCloneItem = false;
-		this.#convertHistoryDatesToCurrentLocale();
+		this.id = this.#getId(item);
+		this.parentId = this.#getParentId(item);
+		this.sequence = this.#getSequence(item);
+		this.corpus = this.#getCorpus(item);
+		this.status = this.#getStatus(item);
+		this.expression = this.#getExpression(item);
+		const historyHeaders = this.#getHistoryHeaders(item);
+		this.statusCode = historyHeaders[0].statusCode;
+		this.isPending = historyHeaders[0].isPending;
+		this.date = historyHeaders[0].date;
+		this.recentSubmitters = this.#getRecentSubmitters(historyHeaders);
 	}
-	get item() {
-		const item = this.#doCloneItem ? this.#item.cloneNode(true) : this.#item;
-		this.#doCloneItem = true;
-		return item;
-	}
-	get id() {
-		if (this.#id !== undefined)
-			return this.#id;
-		const parsedId = parseInt(this.#item.querySelector(".pkid a").innerText);
+	#getId(item) {
+		const parsedId = parseInt(item.querySelector(".pkid a").innerText);
 		const id = Number.isNaN(parsedId) ? null : parsedId;
-		this.#id = id;
 		return id;
 	}
-	get parentId() {
-		if (this.#parentId !== undefined)
-			return this.#parentId;
-		const parsedParentId = parseInt(this.#item.querySelector(".status a")?.innerText);
+	#getParentId(item) {
+		const parsedParentId = parseInt(item.querySelector(".status a")?.innerText);
 		const parentId = Number.isNaN(parsedParentId) ? null : parsedParentId;
-		this.#parentId = parentId;
 		return parentId;
 	}
-	get sequence() {
-		if (this.#sequence !== undefined)
-			return this.#sequence;
-		const parsedSeq = parseInt(this.#item.querySelector("a").innerText);
+	#getSequence(item) {
+		const parsedSeq = parseInt(item.querySelector("a").innerText);
 		const sequence = Number.isNaN(parsedSeq) ? 0 : parsedSeq;
-		this.#sequence = sequence;
 		return sequence;
 	}
-	get corpus() {
-		if (this.#corpus !== undefined)
-			return this.#corpus;
-		const corpus = this.#item.innerText.match(/\w+\b/)[0];
-		this.#corpus = corpus;
+	#getCorpus(item) {
+		const corpus = item.innerText.match(/\w+\b/)[0];
 		return corpus;
 	}
-	get status() {
-		if (this.#status !== undefined)
-			return this.#status;
-		const status = this.#item.querySelector(".status .pend") ?
-			this.#item.querySelector(".status .pend").innerText :
-			this.#item.querySelector(".status").innerText;
-		this.#status = status;
+	#getStatus(item) {
+		const status = item.querySelector(".status .pend") ?
+			item.querySelector(".status .pend").innerText :
+			item.querySelector(".status").innerText;
 		return status;
 	}
-	get statusCode() {
-		if (this.#statusCode !== undefined)
-			return this.#statusCode;
-		const statusCode = this.historyHeaders[0].statusCode;
-		this.#statusCode = statusCode;
-		return statusCode;
-	}
-	get isPending() {
-		if (this.#isPending !== undefined)
-			return this.#isPending;
-		const isPending = this.historyHeaders[0].isPending;
-		this.#isPending = isPending;
-		return isPending;
-	}
-	get expression() {
-		if (this.#expression !== undefined)
-			return this.#expression;
-		const expression = this.#item.querySelector(".kanj") === null ?
-			this.#item.querySelector(".rdng").innerText :
-			this.#item.querySelector(".kanj").innerText;
-		this.#expression = expression;
+	#getExpression(item) {
+		const expression = item.querySelector(".kanj") === null ?
+			item.querySelector(".rdng").innerText :
+			item.querySelector(".kanj").innerText;
 		return expression;
 	}
-	get date() {
-		if (this.#date !== undefined)
-			return this.#date;
-		const date = this.historyHeaders[0].date;
-		this.#date = date;
-		return date;
+	#getHistoryHeaders(item) {
+		const historyHeaders = [];
+		item.querySelectorAll(".hhdr").forEach(hhdr => {
+			historyHeaders.push(new HistoryHeader(hhdr));
+		});
+		return historyHeaders;
 	}
-	get recentSubmitters() {
-		if (this.#recentSubmitters !== undefined)
-			return this.#recentSubmitters;
+	#getRecentSubmitters(historyHeaders) {
 		const twoWeeksFromLastEdit = (() => {
 			const x = new Date(this.date);
 			x.setDate(x.getDate() - 14);
 			return x;
 		})();
 		const submitterSet = new Set();
-		this.historyHeaders.forEach(historyHeader => {
+		historyHeaders.forEach(historyHeader => {
 			const editDate = historyHeader.date;
 			const submitter = historyHeader.submitter;
 			if (twoWeeksFromLastEdit < editDate)
@@ -199,18 +157,11 @@ class Entry {
 		});
 		const submitters = [...submitterSet];
 		submitters.reverse();
-		this.#recentSubmitters = submitters;
 		return submitters;
 	}
-	get historyHeaders() {
-		if (this.#historyHeaders !== undefined)
-			return this.#historyHeaders;
-		const historyHeaders = [];
-		this.#item.querySelectorAll(".hhdr").forEach(hhdr => {
-			historyHeaders.push(new HistoryHeader(hhdr));
-		});
-		this.#historyHeaders = historyHeaders;
-		return historyHeaders;
+	get item() {
+		const item = this.#item.cloneNode(true);
+		return item;
 	}
 	get isViewed() {
 		if (this.#isViewed !== undefined)
@@ -236,63 +187,45 @@ class Entry {
 		viewedSequences[this.sequence][this.id] = value;
 		localStorage.setItem("jmdictdb-viewed-entries", JSON.stringify(viewedSequences));
 	}
-	#convertHistoryDatesToCurrentLocale() {
-		this.historyHeaders.forEach(historyHeader => {
-			historyHeader.convertDateToCurrentLocale();
-		});
-	}
 }
 
 class HistoryHeader {
 	static #timestampRegex = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/;
 	static #nullDate = new Date("1970/01/01 00:00:00 +0000");
-	#hhdr;
-	#statusCode;
-	#isPending;
-	#date;
-	#submitter;
 	constructor(hhdr) {
-		this.#hhdr = hhdr;
+		this.statusCode = this.#getStatusCode(hhdr);
+		this.isPending = this.#getIsPending(hhdr);
+		this.date = this.#getDate(hhdr);
+		this.submitter = this.#getSubmitter(hhdr);
+		this.#convertDateToCurrentLocale(hhdr);
 	}
-	get statusCode() {
-		if (this.#statusCode !== undefined)
-			return this.#statusCode;
-		const statusCode = this.#hhdr.innerText.match(/^[ADR]/)[0];
-		this.#statusCode = statusCode;
-		return statusCode;
+	#getStatusCode(hhdr) {
+		const statusCode = hhdr.innerText.match(/^\s*([ADR])/);
+		return statusCode[1];
 	}
-	get isPending() {
-		if (this.#isPending !== undefined)
-			return this.#isPending;
-		const isPending = /^[ADR]\*/.test(this.#hhdr.innerText);
-		this.#isPending = isPending;
+	#getIsPending(hhdr) {
+		const isPending = /^\s*[ADR]\*/.test(hhdr.innerText);
 		return isPending;
 	}
-	get date() {
-		if (this.#date !== undefined)
-			return this.#date;
-		const timestamps = this.#hhdr.innerText.match(HistoryHeader.#timestampRegex);
+	#getDate(hhdr) {
+		const timestamps = hhdr.innerText.match(HistoryHeader.#timestampRegex);
 		const date = timestamps === null ?
 			new Date(HistoryHeader.#nullDate) :
 			new Date(timestamps[0].replace(/-/g, "/") + " +0000");
-		this.#hhdr.dataset.date = date.toJSON();
-		this.#date = date;
+		hhdr.dataset.date = date.toJSON();
 		return date;
 	}
-	get submitter() {
-		if (this.#submitter !== undefined)
-			return this.#submitter;
-		const submitterText = this.#hhdr.querySelector(".submitter_name").innerText;
+	#getSubmitter(hhdr) {
+		const submitterText = hhdr.querySelector(".submitter_name").innerText;
 		const submitter = submitterText == "" ?
 			"Anonymous" :
 			submitterText;
-		this.#submitter = submitter;
 		return submitter;
 	}
-	convertDateToCurrentLocale() {
+	#convertDateToCurrentLocale(hhdr) {
 		if (this.date.getTime() === HistoryHeader.#nullDate.getTime())
 			return;
-		const childTextNodes = Array.from(this.#hhdr.childNodes)
+		const childTextNodes = Array.from(hhdr.childNodes)
 			.filter(n => n.nodeType == Node.TEXT_NODE);
 		childTextNodes.forEach(node => {
 			if (HistoryHeader.#timestampRegex.test(node.textContent)) {
@@ -593,6 +526,7 @@ function main() {
 
 	const entryTree = new EntryTree();
 	document.querySelectorAll(".item").forEach(item => {
+		item.remove();
 		const entry = new Entry(item);
 		entryTree.add(entry);
 	});
