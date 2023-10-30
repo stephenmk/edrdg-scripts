@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           JMdictDB collapsible updates
 // @namespace      edrdg-scripts
-// @version        2023.10.29.0
+// @version        2023.10.29.1
 // @author         Stephen Kraus
 // @match          *://*.edrdg.org/jmwsgi/updates.py*
 // @exclude-match  *://*.edrdg.org/jmwsgi/updates.py*&i=*
@@ -234,33 +234,10 @@ class Entry {
 			historyHeader.convertDateToCurrentLocale();
 		});
 	}
-	createSummaryNode() {
-		const childNodes = [
-			document.createTextNode(" "),
-			document.createTextNode(this.statusCode),
-			document.createTextNode(" | "),
-			document.createTextNode(this.date.toLocaleString(undefined, localeOptions)),
-			this.#createJapaneseTextNode("【" + this.expression + "】"),
-			document.createTextNode(this.recentSubmitters.join(", ")),
-		];
-		const summaryNode = document.createElement("div");
-		if (this.isPending)
-			summaryNode.classList.add("pending")
-		childNodes.forEach(node => {
-			summaryNode.appendChild(node);
-		});
-		return summaryNode;
-	}
 	createContentNode() {
 		this.#item.remove();
 		const contentNode = this.#item.cloneNode(true);
 		return contentNode;
-	}
-	#createJapaneseTextNode(text) {
-		const span = document.createElement("span");
-		span.lang = "ja";
-		span.textContent = text;
-		return span;
 	}
 }
 
@@ -333,7 +310,7 @@ class CollapsibleContent {
 		if (!entry.isViewed)
 			collapseButton.classList.add("active");
 		collapseButton.addEventListener("click", this.#buttonClickListener);
-		const headerNode = entry.createSummaryNode();
+		const headerNode = this.#createSummaryNode(entry);
 		collapseButton.appendChild(headerNode);
 
 		const collapseContent = document.createElement("div");
@@ -353,6 +330,29 @@ class CollapsibleContent {
 		collapseContainer.appendChild(collapseContent);
 
 		return collapseContainer;
+	}
+	#createSummaryNode(entry) {
+		const childNodes = [
+			document.createTextNode(" "),
+			document.createTextNode(entry.statusCode),
+			document.createTextNode(" | "),
+			document.createTextNode(entry.date.toLocaleString(undefined, localeOptions)),
+			this.#createJapaneseTextNode("【" + entry.expression + "】"),
+			document.createTextNode(entry.recentSubmitters.join(", ")),
+		];
+		const summaryNode = document.createElement("div");
+		if (entry.isPending)
+			summaryNode.classList.add("pending")
+		childNodes.forEach(node => {
+			summaryNode.appendChild(node);
+		});
+		return summaryNode;
+	}
+	#createJapaneseTextNode(text) {
+		const span = document.createElement("span");
+		span.lang = "ja";
+		span.textContent = text;
+		return span;
 	}
 	#buttonClickListener() {
 		const button = this;
