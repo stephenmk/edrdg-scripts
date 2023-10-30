@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           JMdictDB collapsible updates
 // @namespace      edrdg-scripts
-// @version        2023.10.29.1
+// @version        2023.10.29.2
 // @author         Stephen Kraus
 // @match          *://*.edrdg.org/jmwsgi/updates.py*
 // @exclude-match  *://*.edrdg.org/jmwsgi/updates.py*&i=*
@@ -89,6 +89,7 @@ class EntryTree {
 
 class Entry {
 	#item;
+	#doCloneItem;
 	#id;
 	#parentId;
 	#sequence;
@@ -103,6 +104,13 @@ class Entry {
 	#historyHeaders;
 	constructor(item) {
 		this.#item = item;
+		this.#doCloneItem = false;
+		this.#convertHistoryDatesToCurrentLocale();
+	}
+	get item() {
+		const item = this.#doCloneItem ? this.#item.cloneNode(true) : this.#item;
+		this.#doCloneItem = true;
+		return item;
 	}
 	get id() {
 		if (this.#id !== undefined)
@@ -228,16 +236,10 @@ class Entry {
 		viewedSequences[this.sequence][this.id] = value;
 		localStorage.setItem("jmdictdb-viewed-entries", JSON.stringify(viewedSequences));
 	}
-	/* Should this instead be done during the createContentNode procedure? */
-	convertHistoryDatesToCurrentLocale() {
+	#convertHistoryDatesToCurrentLocale() {
 		this.historyHeaders.forEach(historyHeader => {
 			historyHeader.convertDateToCurrentLocale();
 		});
-	}
-	createContentNode() {
-		this.#item.remove();
-		const contentNode = this.#item.cloneNode(true);
-		return contentNode;
 	}
 }
 
@@ -315,7 +317,7 @@ class CollapsibleContent {
 
 		const collapseContent = document.createElement("div");
 		collapseContent.classList.add("collapse-content");
-		const contentNode = entry.createContentNode();
+		const contentNode = entry.item;
 		collapseContent.appendChild(contentNode);
 		if (entry.isViewed) {
 			collapseContent.style.maxHeight = 0;
@@ -592,7 +594,6 @@ function main() {
 	const entryTree = new EntryTree();
 	document.querySelectorAll(".item").forEach(item => {
 		const entry = new Entry(item);
-		entry.convertHistoryDatesToCurrentLocale();
 		entryTree.add(entry);
 	});
 
