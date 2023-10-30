@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           JMdictDB collapsible updates
 // @namespace      edrdg-scripts
-// @version        2023.10.28.1
+// @version        2023.10.29.0
 // @author         Stephen Kraus
 // @match          *://*.edrdg.org/jmwsgi/updates.py*
 // @exclude-match  *://*.edrdg.org/jmwsgi/updates.py*&i=*
@@ -348,6 +348,7 @@ class CollapsibleContent {
 
 		const collapseContainer = document.createElement("div");
 		collapseContainer.classList.add("collapse-container");
+		collapseContainer.dataset.corpus = entry.corpus;
 		collapseContainer.appendChild(collapseButton);
 		collapseContainer.appendChild(collapseContent);
 
@@ -506,6 +507,20 @@ function createStyleNode() {
              border: 0px 1px 1px 1px !important;
              border-top-width: 0px !important;
              border-radius: 0px 0px 10px 10px;
+           }
+           .collapse-container[data-corpus="jmnedict"] .collapse-button,
+           .collapse-container[data-corpus="jmnedict"] .item {
+             background-color: lavender;
+           }
+           .collapse-container[data-corpus="jmnedict"] .collapse-button.active {
+             background-color: revert;
+           }
+           .collapse-container[data-corpus="test"] .collapse-button,
+           .collapse-container[data-corpus="test"] .item {
+             background-color: antiquewhite;
+           }
+           .collapse-container[data-corpus="test"] .collapse-button.active {
+             background-color: revert;
            }
            .jmd-footer {
              height: 90vh; /* prevent the scroll from jumping around when collapsing content near the bottom of the page */
