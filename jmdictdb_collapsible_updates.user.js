@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           JMdictDB collapsible updates
 // @namespace      edrdg-scripts
-// @version        2023.10.30.1
+// @version        2023.10.30.2
 // @author         Stephen Kraus
 // @match          *://*.edrdg.org/jmwsgi/updates.py*
 // @exclude-match  *://*.edrdg.org/jmwsgi/updates.py*&i=*
@@ -13,6 +13,7 @@
 // ==/UserScript==
 'use strict';
 
+
 const localeOptions = {
 	year: "2-digit",
 	month: "numeric",
@@ -21,6 +22,7 @@ const localeOptions = {
 	minute: "2-digit",
 	hourCycle: "h12",
 };
+
 
 class EntryTree {
 	#graph; // parent ID -> array of children IDs
@@ -86,6 +88,7 @@ class EntryTree {
 		return ancestors;
 	}
 }
+
 
 class Entry {
 	#item;
@@ -189,6 +192,7 @@ class Entry {
 	}
 }
 
+
 class HistoryHeader {
 	static #timestampRegex = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/;
 	static #nullDate = new Date("1970/01/01 00:00:00 +0000");
@@ -237,14 +241,16 @@ class HistoryHeader {
 	}
 }
 
+
 class CollapsibleContent {
-	createNode(entry) {
+	createNode(entry, indentLevel) {
 		const button = this.#createCollapseButton(entry);
 		const content = this.#createCollapseContent(entry);
 		const container = this.#createCollapseContainer(entry);
 		container.appendChild(button);
 		container.appendChild(content);
-		return container;
+		const node = this.#createIndentNode(container, indentLevel);
+		return node;
 	}
 	#createCollapseButton(entry) {
 		const button = document.createElement("button");
@@ -298,6 +304,13 @@ class CollapsibleContent {
 		span.textContent = text;
 		return span;
 	}
+	#createIndentNode(childNode, indentLevel) {
+		const indentNode = document.createElement("div");
+		indentNode.classList.add("indent");
+		indentNode.style = "--indent: " + indentLevel;
+		indentNode.appendChild(childNode);
+		return indentNode;
+	}
 	#buttonClickListener() {
 		const button = this;
 		const content = this.nextElementSibling;
@@ -349,6 +362,7 @@ class CollapsibleContent {
 		return scrollHeight;
 	}
 }
+
 
 class DateNavigation {
 	#pageURL;
@@ -442,6 +456,7 @@ class DateNavigation {
 	}
 }
 
+
 function createStyleNode() {
 	const styleNode = document.createElement('style');
 	styleNode.innerText = `
@@ -515,22 +530,14 @@ function createStyleNode() {
 	return styleNode;
 }
 
-function createIndentNode(childNode, indent) {
-	const indentNode = document.createElement("div");
-	indentNode.classList.add("indent");
-	indentNode.style = "--indent: " + indent;
-	indentNode.appendChild(childNode);
-	return indentNode;
-}
 
 function main() {
 	const styleNode = createStyleNode();
 	document.head.appendChild(styleNode);
 
-	const documentBodyContent = document.querySelector(".jmd-content");
-
 	const dateNav = new DateNavigation(document.location);
 	const dateNavLinks = dateNav.createLinks();
+	const documentBodyContent = document.querySelector(".jmd-content");
 	documentBodyContent.appendChild(dateNavLinks);
 
 	const entryTree = new EntryTree();
@@ -543,11 +550,11 @@ function main() {
 	const cc = new CollapsibleContent();
 	entryTree.branches().forEach(entryBranch => {
 		entryBranch.forEach((entry, index) => {
-			const node = cc.createNode(entry)
-			const indentedNode = createIndentNode(node, index)
-			documentBodyContent.appendChild(indentedNode);
+			const node = cc.createNode(entry, index);
+			documentBodyContent.appendChild(node);
 		})
 	});
 }
+
 
 main();
