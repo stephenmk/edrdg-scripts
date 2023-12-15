@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        edrdg N-gram Corpus Count Percentages
 // @namespace   edrdg-scripts
-// @version     2023.12.15.0
+// @version     2023.12.15.1
 // @author      Stephen Kraus
 // @match       *://*.edrdg.org/~jwb/cgi-bin/ngramlookup*
 // @icon        https://www.edrdg.org/favicon.ico
@@ -241,7 +241,4 @@ function main() {
 }
 
 
-// Starting the program this way prevents it from
-// running again on return visits to cached pages
-// (when running the program via greasemonkey).
-window.addEventListener("load", main, false);
+main();
