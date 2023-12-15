@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        edrdg N-gram group parser
 // @namespace   edrdg-scripts
-// @version     2023.12.15.1
+// @version     2023.12.15.2
 // @author      Stephen Kraus
 // @match       *://*.edrdg.org/~jwb/ngramcounts*
 // @icon        https://www.edrdg.org/favicon.ico
@@ -222,6 +222,9 @@ function parseGroupListener() {
 
 
 function main() {
+	if (document.getElementById("group-parser-style")) {
+		return;
+	}
 	const parseButton = document.createElement("button");
 	parseButton.type = "button";
 	parseButton.innerText = "Expand Groups";
@@ -233,6 +236,7 @@ function main() {
 	finalBreak.before(parseButton);
 
 	const style = document.createElement('style');
+	style.id = "group-parser-style";
 	style.innerText = `
           .count-cell {
               text-align: right;

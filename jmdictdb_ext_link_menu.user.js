@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        JMdictDB external links
 // @namespace   edrdg-scripts
-// @version     2023.12.15.1
+// @version     2023.12.15.2
 // @author      Stephen Kraus
 // @match       *://*.edrdg.org/jmwsgi/updates.py*
 // @match       *://*.edrdg.org/jmwsgi/entr.py*
@@ -26,6 +26,7 @@ const urls = {
 
 function makeLinkMenuStyleClasses() {
 	const style = document.createElement('style');
+	style.id = "external-links-style";
 	style.innerText = `
           .link-menu-container {
             position: relative;
@@ -159,6 +160,9 @@ function makeLinkMenus() {
 }
 
 function main() {
+	if (document.getElementById("external-links-style")) {
+		return;
+	}
 	makeLinkMenuStyleClasses();
 	makeLinkMenus()
 	makeLinkMenuHideListener();

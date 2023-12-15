@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           JMdictDB collapsible updates
 // @namespace      edrdg-scripts
-// @version        2023.12.15.1
+// @version        2023.12.15.2
 // @author         Stephen Kraus
 // @match          *://*.edrdg.org/jmwsgi/updates.py*
 // @exclude-match  *://*.edrdg.org/jmwsgi/updates.py*&i=*
@@ -459,6 +459,7 @@ class DateNavigation {
 
 function createStyleNode() {
 	const styleNode = document.createElement('style');
+	styleNode.id = "collapsible-updates-style";
 	styleNode.innerText = `
            .item {
              margin: 0px !important;
@@ -532,6 +533,9 @@ function createStyleNode() {
 
 
 function main() {
+	if (document.getElementById("collapsible-updates-style")) {
+		return;
+	}
 	const styleNode = createStyleNode();
 	document.head.appendChild(styleNode);
 

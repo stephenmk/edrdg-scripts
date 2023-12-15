@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        edrdg N-gram Corpus Count Percentages
 // @namespace   edrdg-scripts
-// @version     2023.12.15.1
+// @version     2023.12.15.2
 // @author      Stephen Kraus
 // @match       *://*.edrdg.org/~jwb/cgi-bin/ngramlookup*
 // @icon        https://www.edrdg.org/favicon.ico
@@ -188,6 +188,9 @@ function formatCounts() {
 
 
 function main() {
+	if (document.getElementById("corpus-count-percentages-style")) {
+		return;
+	}
 	formatCounts();
 
 	document.querySelectorAll("tr").forEach(row => {
@@ -233,6 +236,7 @@ function main() {
 	document.body.appendChild(checkBoxLabel);
 
 	const style = document.createElement('style');
+	style.id = "corpus-count-percentages-style";
 	style.innerText = `
           tr td:nth-child(3) {
             min-width: 60px;
