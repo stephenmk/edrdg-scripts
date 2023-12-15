@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        JMdictDB external links
 // @namespace   edrdg-scripts
-// @version     2023.10.28.0
+// @version     2023.12.15.0
 // @author      Stephen Kraus
 // @match       *://*.edrdg.org/jmwsgi/updates.py*
 // @match       *://*.edrdg.org/jmwsgi/entr.py*
@@ -164,4 +164,7 @@ function main() {
 	makeLinkMenuHideListener();
 }
 
-main();
+// Starting the program this way prevents it from
+// running again on return visits to cached pages
+// (when running the program via greasemonkey).
+window.addEventListener("load", main, false);
