@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        JMdictDB external links
 // @namespace   edrdg-scripts
-// @version     2024.10.26.0
+// @version     2024.10.26.1
 // @author      Stephen Kraus
 // @match       *://*.edrdg.org/jmwsgi/updates.py*
 // @match       *://*.edrdg.org/jmwsgi/entr.py*
@@ -21,7 +21,8 @@ const urls = {
 	"eijiro":   "https://eow.alc.co.jp/search?q=$1",
 	"wadoku":   "https://www.wadoku.de/search/?q=$1",
 	"weblio":   "https://www.weblio.jp/content/$1",
-	"goo":      "https://dictionary.goo.ne.jp/srch/all/$1/m0u/"
+	"goo":      "https://dictionary.goo.ne.jp/srch/all/$1/m0u/",
+	"wwwjdic":  "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1MUQ$1"
 }
 
 function makeLinkMenuStyleClasses() {
@@ -141,6 +142,7 @@ function makeLinkMenus() {
 			menuItems.push(makeLink("Weblio", urls["weblio"], [expression]))
 			menuItems.push(makeLink("Eijiro (ALC server)", urls["eijiro"], [expression]))
 			menuItems.push(makeLink("Wadoku", urls["wadoku"], [expression]))
+			menuItems.push(makeLink("WWWJDIC", urls["wwwjdic"], [expression]))
 		})
 
 		const linkMenuContent = document.createElement("div");
