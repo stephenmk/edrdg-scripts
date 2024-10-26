@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        JMdictDB external links
 // @namespace   edrdg-scripts
-// @version     2023.12.15.2
+// @version     2024.10.26.0
 // @author      Stephen Kraus
 // @match       *://*.edrdg.org/jmwsgi/updates.py*
 // @match       *://*.edrdg.org/jmwsgi/entr.py*
@@ -58,13 +58,18 @@ function makeLinkMenuStyleClasses() {
 }
 
 // Toggle the display of the link menu on button clicks
-function linkMenuButtonClick() {
-	const linkMenuContent = this.nextElementSibling;
-	const doShowMenu = !linkMenuContent.classList.contains("active");
-	hideAllLinkMenus();
-	if (doShowMenu) {
-		linkMenuContent.classList.add("active")
+function makeMenuButtonClickListener() {
+	const listener = (event) => {
+		if (event.target.classList.contains("link-menu-button")) {
+			const linkMenuContent = event.target.nextElementSibling;
+			const doShowMenu = !linkMenuContent.classList.contains("active");
+			hideAllLinkMenus();
+			if (doShowMenu) {
+				linkMenuContent.classList.add("active")
+			}
+		}
 	}
+	document.addEventListener("click", listener, false)
 }
 
 // Hide the menu after an outside click
@@ -147,7 +152,6 @@ function makeLinkMenus() {
 		const linkMenuButton = document.createElement("button");
 		linkMenuButton.classList.add("link-menu-button");
 		linkMenuButton.innerText = "External Links"
-		linkMenuButton.addEventListener("click", linkMenuButtonClick, false)
 
 		const linkMenuContainer = document.createElement("div");
 		linkMenuContainer.classList.add("link-menu-container");
@@ -164,7 +168,8 @@ function main() {
 		return;
 	}
 	makeLinkMenuStyleClasses();
-	makeLinkMenus()
+	makeLinkMenus();
+	makeMenuButtonClickListener();
 	makeLinkMenuHideListener();
 }
 
