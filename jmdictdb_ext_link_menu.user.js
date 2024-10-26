@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        JMdictDB external links
 // @namespace   edrdg-scripts
-// @version     2024.10.26.1
+// @version     2024.10.26.2
 // @author      Stephen Kraus
 // @match       *://*.edrdg.org/jmwsgi/updates.py*
 // @match       *://*.edrdg.org/jmwsgi/entr.py*
@@ -14,15 +14,18 @@
 // ==/UserScript==
 'use strict';
 
-const urls = {
-	"google":   "https://www.edrdg.org/~jwb/cgi-bin/ngramlookup?sent=$1",
-	"km":       "https://www.edrdg.org/~jwb/cgi-bin/ngramlookupwww?sent=$1",
-	"kotobank": "https://kotobank.jp/gs/?q=$1",
-	"eijiro":   "https://eow.alc.co.jp/search?q=$1",
-	"wadoku":   "https://www.wadoku.de/search/?q=$1",
-	"weblio":   "https://www.weblio.jp/content/$1",
-	"goo":      "https://dictionary.goo.ne.jp/srch/all/$1/m0u/",
-	"wwwjdic":  "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1MUQ$1"
+const ngramUrls = {
+	"N-gram counts (Google)": "https://www.edrdg.org/~jwb/cgi-bin/ngramlookup?sent=$1",
+	"N-gram counts (KM)":     "https://www.edrdg.org/~jwb/cgi-bin/ngramlookupwww?sent=$1",
+}
+
+const dictionaryUrls = {
+	"Kotobank":            "https://kotobank.jp/gs/?q=$1",
+	"Goo Jisho":           "https://dictionary.goo.ne.jp/srch/all/$1/m0u/",
+	"Weblio":              "https://www.weblio.jp/content/$1",
+	"Eijiro (ALC server)": "https://eow.alc.co.jp/search?q=$1",
+	"Wadoku":              "https://www.wadoku.de/search/?q=$1",
+	"WWWJDIC":             "https://www.edrdg.org/cgi-bin/wwwjdic/wwwjdic?1MUQ$1"
 }
 
 function makeLinkMenuStyleClasses() {
@@ -46,13 +49,12 @@ function makeLinkMenuStyleClasses() {
           .link-menu-content.active {
             display: block;
           }
+          .link-menu-details {
+            user-select: none;
+          }
           .link-menu-item {
             display: block;
             padding: 2px 0px 2px 20px;
-          }
-          .link-menu-heading {
-            display: block;
-            padding: 2px 0px 2px 2px;
           }
           `;
 	document.head.appendChild(style);
@@ -110,6 +112,22 @@ function makeLinkHeading(text) {
 	return spanNode;
 }
 
+function makeExpressionLinks(expression, index) {
+	const summary = document.createElement("summary");
+	summary.classList.add("link-menu-summary");
+	summary.appendChild(makeLinkHeading(expression));
+	const expressionLinks = document.createElement("details");
+	if (index === 0) {
+		expressionLinks.setAttribute("open", "");
+	}
+	expressionLinks.classList.add("link-menu-details");
+	expressionLinks.appendChild(summary);
+	Object.entries(dictionaryUrls).forEach(([titleText, url]) => {
+		expressionLinks.appendChild(makeLink(titleText, url, [expression]));
+	})
+	return expressionLinks;
+}
+
 function makeLinkMenus() {
 	document.querySelectorAll(".item").forEach(item => {
 		const kanjiList = [];
@@ -131,18 +149,12 @@ function makeLinkMenus() {
 			kanjiList.concat(readingList[0]) :
 			readingList;
 
-		const menuItems = [
-			makeLink("N-gram counts (Google)", urls["google"], allExpressions),
-			makeLink("N-gram counts (KM)", urls["km"], allExpressions)
-		]
-		linkExpressions.forEach(expression => {
-			menuItems.push(makeLinkHeading(expression))
-			menuItems.push(makeLink("Kotobank", urls["kotobank"], [expression]))
-			menuItems.push(makeLink("Goo Jisho", urls["goo"], [expression]))
-			menuItems.push(makeLink("Weblio", urls["weblio"], [expression]))
-			menuItems.push(makeLink("Eijiro (ALC server)", urls["eijiro"], [expression]))
-			menuItems.push(makeLink("Wadoku", urls["wadoku"], [expression]))
-			menuItems.push(makeLink("WWWJDIC", urls["wwwjdic"], [expression]))
+		const menuItems = [];
+		Object.entries(ngramUrls).forEach(([titleText, url]) => {
+			menuItems.push(makeLink(titleText, url, allExpressions))
+		})
+		linkExpressions.forEach((expression, idx) => {
+			menuItems.push(makeExpressionLinks(expression, idx))
 		})
 
 		const linkMenuContent = document.createElement("div");
