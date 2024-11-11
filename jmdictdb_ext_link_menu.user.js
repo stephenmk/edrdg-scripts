@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        JMdictDB external links
 // @namespace   edrdg-scripts
-// @version     2024.10.26.2
+// @version     2024.11.11.0
 // @author      Stephen Kraus
 // @match       *://*.edrdg.org/jmwsgi/updates.py*
 // @match       *://*.edrdg.org/jmwsgi/entr.py*
@@ -20,7 +20,7 @@ const ngramUrls = {
 }
 
 const dictionaryUrls = {
-	"Kotobank":            "https://kotobank.jp/gs/?q=$1",
+	"Kotobank":            "https://kotobank.jp/search?q=$1",
 	"Goo Jisho":           "https://dictionary.goo.ne.jp/srch/all/$1/m0u/",
 	"Weblio":              "https://www.weblio.jp/content/$1",
 	"Eijiro (ALC server)": "https://eow.alc.co.jp/search?q=$1",
