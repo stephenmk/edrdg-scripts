@@ -502,6 +502,7 @@ function createStyleNode() {
              width: 100%;
              text-align: left;
              border-radius: 10px;
+             border-color: lightgray;
              font-size: 1em;
            }
            .collapse-button.active {
