@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           JMdictDB collapsible updates
 // @namespace      edrdg-scripts
-// @version        2025.07.25.0
+// @version        2025.07.25.1
 // @author         Stephen Kraus
 // @match          *://*.edrdg.org/jmwsgi/updates.py*
 // @exclude-match  *://*.edrdg.org/jmwsgi/updates.py*&i=*
@@ -140,7 +140,7 @@ class Entry {
 	}
 	#getHistoryHeaders(item) {
 		const historyHeaders = [];
-		item.querySelectorAll(".hhdr").forEach(hhdr => {
+		item.querySelectorAll("td.hhdr").forEach(hhdr => {
 			historyHeaders.push(new HistoryHeader(hhdr));
 		});
 		return historyHeaders;
