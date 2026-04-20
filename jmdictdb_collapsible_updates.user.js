@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           JMdictDB collapsible updates
 // @namespace      edrdg-scripts
-// @version        2025.07.25.1
+// @version        2026.04.19.0
 // @author         Stephen Kraus
 // @match          *://*.edrdg.org/jmwsgi/updates.py*
 // @exclude-match  *://*.edrdg.org/jmwsgi/updates.py*&i=*
@@ -133,14 +133,14 @@ class Entry {
 		return status;
 	}
 	#getExpression(item) {
-		const expression = item.querySelector(".kanj") === null ?
-			item.querySelector(".rdng").innerText :
-			item.querySelector(".kanj").innerText;
+		const expression = item.querySelector("span.kanj") === null ?
+			item.querySelector("span.rdng").innerText :
+			item.querySelector("span.kanj").innerText;
 		return expression;
 	}
 	#getHistoryHeaders(item) {
 		const historyHeaders = [];
-		item.querySelectorAll("td.hhdr").forEach(hhdr => {
+		item.querySelectorAll(".header").forEach(hhdr => {
 			historyHeaders.push(new HistoryHeader(hhdr));
 		});
 		return historyHeaders;
@@ -220,10 +220,10 @@ class HistoryHeader {
 		return date;
 	}
 	#getSubmitter(hhdr) {
-		const submitterText = hhdr.querySelector(".submitter_name").innerText;
-		const submitter = submitterText == "" ?
-			"Anonymous" :
-			submitterText;
+		const submitterText = hhdr.querySelector(".name").innerText;
+		const submitter = !submitterText?.trim()
+			? "Anonymous"
+			: submitterText;
 		return submitter;
 	}
 	#convertDateToCurrentLocale(hhdr) {
@@ -461,7 +461,7 @@ function createStyleNode() {
 	const styleNode = document.createElement('style');
 	styleNode.id = "collapsible-updates-style";
 	styleNode.innerText = `
-           .item {
+           .v-entr {
              margin: 0px !important;
              padding: 10px 10px 10px 20px !important;
              border: 0px 1px 1px 1px !important;
@@ -546,7 +546,7 @@ function main() {
 	documentBodyContent.appendChild(dateNavLinks);
 
 	const entryTree = new EntryTree();
-	document.querySelectorAll(".item").forEach(item => {
+	document.querySelectorAll(".v-entr").forEach(item => {
 		item.remove();
 		const entry = new Entry(item);
 		entryTree.add(entry);
