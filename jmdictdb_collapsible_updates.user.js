@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           JMdictDB collapsible updates
 // @namespace      edrdg-scripts
-// @version        2026.04.19.0
+// @version        2026.04.19.1
 // @author         Stephen Kraus
 // @match          *://*.edrdg.org/jmwsgi/updates.py*
 // @exclude-match  *://*.edrdg.org/jmwsgi/updates.py*&i=*
@@ -482,7 +482,8 @@ function createStyleNode() {
            .collapse-container[data-corpus="test"] .collapse-button.active {
              background-color: revert;
            }
-           .jmd-footer {
+           footer {
+             margin-top: 1em;
              height: 90vh; /* prevent the scroll from jumping around when collapsing content near the bottom of the page */
            }
            .date-navigation {
