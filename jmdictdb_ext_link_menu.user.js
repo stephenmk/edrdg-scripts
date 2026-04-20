@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        JMdictDB external links
 // @namespace   edrdg-scripts
-// @version     2024.11.11.0
+// @version     2026.4.19.0
 // @author      Stephen Kraus
 // @match       *://*.edrdg.org/jmwsgi/updates.py*
 // @match       *://*.edrdg.org/jmwsgi/entr.py*
@@ -129,14 +129,14 @@ function makeExpressionLinks(expression, index) {
 }
 
 function makeLinkMenus() {
-	document.querySelectorAll(".item").forEach(item => {
+	document.querySelectorAll(".v-entr").forEach(item => {
 		const kanjiList = [];
-		item.querySelectorAll(".kanj").forEach(kanji => {
+		item.querySelectorAll("span.kanj").forEach(kanji => {
 			kanjiList.push(kanji.innerText)
 		})
 
 		const readingList = [];
-		item.querySelectorAll(".rdng").forEach(reading => {
+		item.querySelectorAll("span.rdng").forEach(reading => {
 			readingList.push(reading.innerText)
 		})
 		if (readingList.length == 0) return;
@@ -172,8 +172,8 @@ function makeLinkMenus() {
 		linkMenuContainer.appendChild(linkMenuButton);
 		linkMenuContainer.appendChild(linkMenuContent);
 
-		const firstLineBreak = item.querySelector("br");
-		firstLineBreak.before(linkMenuContainer);
+		const firstLineBreak = item.querySelector("header");
+		firstLineBreak.appendChild(linkMenuContainer);
 	})
 }
 
