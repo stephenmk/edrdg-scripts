@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           JMdictDB collapsible updates
 // @namespace      edrdg-scripts
-// @version        2026.04.19.1
+// @version        2026.04.19.2
 // @author         Stephen Kraus
 // @match          *://*.edrdg.org/jmwsgi/updates.py*
 // @exclude-match  *://*.edrdg.org/jmwsgi/updates.py*&i=*
@@ -467,6 +467,12 @@ function createStyleNode() {
              border: 0px 1px 1px 1px !important;
              border-top-width: 0px !important;
              border-radius: 0px 0px 10px 10px;
+           }
+           .stat {
+             font-weight: normal !important;
+           }
+           .dt {
+             font-weight: normal !important;
            }
            .collapse-container[data-corpus="jmnedict"] .collapse-button,
            .collapse-container[data-corpus="jmnedict"] .item {
