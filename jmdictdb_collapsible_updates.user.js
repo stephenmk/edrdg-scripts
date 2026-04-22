@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           JMdictDB collapsible updates
 // @namespace      edrdg-scripts
-// @version        2026.04.19.2
+// @version        2026.04.21.0
 // @author         Stephen Kraus
 // @match          *://*.edrdg.org/jmwsgi/updates.py*
 // @exclude-match  *://*.edrdg.org/jmwsgi/updates.py*&i=*
@@ -123,7 +123,7 @@ class Entry {
 		return sequence;
 	}
 	#getCorpus(item) {
-		const corpus = item.innerText.match(/\w+\b/)[0];
+		const corpus = item.querySelector(".abbr").innerText;
 		return corpus;
 	}
 	#getStatus(item) {
@@ -475,14 +475,14 @@ function createStyleNode() {
              font-weight: normal !important;
            }
            .collapse-container[data-corpus="jmnedict"] .collapse-button,
-           .collapse-container[data-corpus="jmnedict"] .item {
+           .collapse-container[data-corpus="jmnedict"] .v-entr {
              background-color: lavender;
            }
            .collapse-container[data-corpus="jmnedict"] .collapse-button.active {
              background-color: revert;
            }
            .collapse-container[data-corpus="test"] .collapse-button,
-           .collapse-container[data-corpus="test"] .item {
+           .collapse-container[data-corpus="test"] .v-entr {
              background-color: antiquewhite;
            }
            .collapse-container[data-corpus="test"] .collapse-button.active {
