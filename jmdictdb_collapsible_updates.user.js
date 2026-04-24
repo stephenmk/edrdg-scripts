@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           JMdictDB collapsible updates
 // @namespace      edrdg-scripts
-// @version        2026.04.21.0
+// @version        2026.04.24.0
 // @author         Stephen Kraus
 // @match          *://*.edrdg.org/jmwsgi/updates.py*
 // @exclude-match  *://*.edrdg.org/jmwsgi/updates.py*&i=*
@@ -468,8 +468,14 @@ function createStyleNode() {
              border-top-width: 0px !important;
              border-radius: 0px 0px 10px 10px;
            }
+           li.hist-item dd {
+             margin-inline-start: revert !important;
+           }
            .stat {
              font-weight: normal !important;
+           }
+           .anonymous-name {
+             font-style: italic;
            }
            .dt {
              font-weight: normal !important;
@@ -539,6 +545,26 @@ function createStyleNode() {
 	return styleNode;
 }
 
+function designAdjustments()
+{
+	// Remove these "Comments" headers.
+	document.querySelectorAll(".comments dt").forEach(item => {
+		item.remove();
+	});
+
+	// Replace "Refs" with "References."
+	document.querySelectorAll(".refs dt").forEach(item => {
+		item.innerText = "References";
+	});
+
+	// Remove these "Comments" headers.
+	document.querySelectorAll(".header .name").forEach(item => {
+		if(!item.innerText.trim()) {
+			item.innerText = "Anonymous";
+			item.classList.add("anonymous-name");
+		}
+	});
+}
 
 function main() {
 	if (document.getElementById("collapsible-updates-style")) {
@@ -546,6 +572,8 @@ function main() {
 	}
 	const styleNode = createStyleNode();
 	document.head.appendChild(styleNode);
+
+	designAdjustments();
 
 	const dateNav = new DateNavigation(document.location);
 	const dateNavLinks = dateNav.createLinks();
