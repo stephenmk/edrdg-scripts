@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           JMdictDB collapsible updates
 // @namespace      edrdg-scripts
-// @version        2026.04.24.0
+// @version        2026.04.26.0
 // @author         Stephen Kraus
 // @match          *://*.edrdg.org/jmwsgi/updates.py*
 // @exclude-match  *://*.edrdg.org/jmwsgi/updates.py*&i=*
@@ -113,7 +113,7 @@ class Entry {
 		return id;
 	}
 	#getParentId(item) {
-		const parsedParentId = parseInt(item.querySelector(".status a")?.innerText);
+		const parsedParentId = parseInt(item.querySelector(".pkid a:nth-child(2)")?.innerText);
 		const parentId = Number.isNaN(parsedParentId) ? null : parsedParentId;
 		return parentId;
 	}
